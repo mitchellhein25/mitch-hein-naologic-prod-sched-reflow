@@ -1,8 +1,6 @@
 {
   "name": "Single work order already valid",
   "description": "A single work order that already meets all constraints should remain unchanged",
-  "complexity": "basic",
-  "feature": "basic-reflow",
   "testExamples": [
     {
       "input": {
@@ -12,7 +10,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-001-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-001-001",
               "workCenterId": "wc-001",
               "startDate": "2024-01-10T08:00:00Z",
               "endDate": "2024-01-10T16:00:00Z",
@@ -45,28 +43,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -77,7 +53,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-002-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-002-001",
               "workCenterId": "wc-001",
               "startDate": "2024-01-17T09:00:00Z",
               "endDate": "2024-01-17T17:00:00Z",
@@ -110,28 +86,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -142,7 +96,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-003-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-003-001",
               "workCenterId": "wc-001",
               "startDate": "2024-01-24T10:00:00Z",
               "endDate": "2024-01-24T18:00:00Z",
@@ -175,28 +129,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -207,7 +139,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-004-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-004-001",
               "workCenterId": "wc-001",
               "startDate": "2024-01-31T08:00:00Z",
               "endDate": "2024-01-31T16:00:00Z",
@@ -240,28 +172,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -272,7 +182,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-005-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-005-001",
               "workCenterId": "wc-001",
               "startDate": "2024-02-07T09:00:00Z",
               "endDate": "2024-02-07T17:00:00Z",
@@ -305,28 +215,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -337,7 +225,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-006-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-006-001",
               "workCenterId": "wc-001",
               "startDate": "2024-02-14T10:00:00Z",
               "endDate": "2024-02-14T18:00:00Z",
@@ -370,28 +258,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -402,7 +268,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-007-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-007-001",
               "workCenterId": "wc-001",
               "startDate": "2024-02-21T08:00:00Z",
               "endDate": "2024-02-21T16:00:00Z",
@@ -435,28 +301,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -467,7 +311,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-008-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-008-001",
               "workCenterId": "wc-001",
               "startDate": "2024-02-28T09:00:00Z",
               "endDate": "2024-02-28T17:00:00Z",
@@ -500,28 +344,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -532,7 +354,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-009-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-009-001",
               "workCenterId": "wc-001",
               "startDate": "2024-03-06T10:00:00Z",
               "endDate": "2024-03-06T18:00:00Z",
@@ -565,28 +387,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -597,7 +397,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-010-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-010-001",
               "workCenterId": "wc-001",
               "startDate": "2024-03-13T08:00:00Z",
               "endDate": "2024-03-13T16:00:00Z",
@@ -630,28 +430,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -662,7 +440,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-011-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-011-001",
               "workCenterId": "wc-001",
               "startDate": "2024-03-20T09:00:00Z",
               "endDate": "2024-03-20T17:00:00Z",
@@ -695,28 +473,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -727,7 +483,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-012-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-012-001",
               "workCenterId": "wc-001",
               "startDate": "2024-03-27T10:00:00Z",
               "endDate": "2024-03-27T18:00:00Z",
@@ -760,28 +516,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -792,7 +526,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-013-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-013-001",
               "workCenterId": "wc-001",
               "startDate": "2024-04-03T08:00:00Z",
               "endDate": "2024-04-03T16:00:00Z",
@@ -825,28 +559,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -857,7 +569,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-014-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-014-001",
               "workCenterId": "wc-001",
               "startDate": "2024-04-10T09:00:00Z",
               "endDate": "2024-04-10T17:00:00Z",
@@ -890,28 +602,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     },
     {
@@ -922,7 +612,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-015-001",
-              "manufacturingOrderId": "mo-001",
+              "manufacturingOrderId": "mo-015-001",
               "workCenterId": "wc-001",
               "startDate": "2024-04-17T10:00:00Z",
               "endDate": "2024-04-17T18:00:00Z",
@@ -955,28 +645,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 0,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": [
-          "basic",
-          "single-work-order",
-          "no-change"
-        ],
-        "shouldSucceed": true
       }
     }
   ]

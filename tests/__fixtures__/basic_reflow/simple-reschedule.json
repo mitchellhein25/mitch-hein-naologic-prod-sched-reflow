@@ -1,8 +1,6 @@
 {
   "name": "Simple single work order reschedule",
   "description": "Move a single work order earlier to fit constraints",
-  "complexity": "basic",
-  "feature": "basic-reflow",
   "testExamples": [
     {
       "input": {
@@ -45,24 +43,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order"],
-        "shouldSucceed": true
       }
     },
     {
@@ -106,24 +86,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order"],
-        "shouldSucceed": true
       }
     },
     {
@@ -167,24 +129,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order"],
-        "shouldSucceed": true
       }
     },
     {
@@ -228,24 +172,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order", "long-duration"],
-        "shouldSucceed": true
       }
     },
     {
@@ -289,24 +215,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order", "early-start"],
-        "shouldSucceed": true
       }
     },
     {
@@ -350,24 +258,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order", "short-duration"],
-        "shouldSucceed": true
       }
     },
     {
@@ -411,24 +301,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order", "afternoon"],
-        "shouldSucceed": true
       }
     },
     {
@@ -472,24 +344,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order"],
-        "shouldSucceed": true
       }
     },
     {
@@ -533,24 +387,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order", "short-duration"],
-        "shouldSucceed": true
       }
     },
     {
@@ -594,24 +430,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order"],
-        "shouldSucceed": true
       }
     },
     {
@@ -655,24 +473,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order", "late-start"],
-        "shouldSucceed": true
       }
     },
     {
@@ -716,24 +516,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order", "early-morning"],
-        "shouldSucceed": true
       }
     },
     {
@@ -777,24 +559,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order"],
-        "shouldSucceed": true
       }
     },
     {
@@ -838,24 +602,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order", "half-hour-start"],
-        "shouldSucceed": true
       }
     },
     {
@@ -899,24 +645,6 @@
             }
           }
         ]
-      },
-      "expectedConstraints": {
-        "allWorkOrdersMustHaveValidDates": true,
-        "allWorkOrdersMustCompleteBeforeDueDate": true,
-        "noWorkOrderOverlaps": true,
-        "workCenterAvailability": true,
-        "dependenciesRespected": false,
-        "shiftsRespected": false,
-        "maintenanceWindowsRespected": false
-      },
-      "expectedChanges": {
-        "minChanges": 0,
-        "maxChanges": 1,
-        "specificChanges": []
-      },
-      "metadata": {
-        "tags": ["basic", "single-work-order", "quarter-hour-start"],
-        "shouldSucceed": true
       }
     }
   ]
