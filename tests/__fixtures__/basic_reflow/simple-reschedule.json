@@ -1,0 +1,923 @@
+{
+  "name": "Simple single work order reschedule",
+  "description": "Move a single work order earlier to fit constraints",
+  "complexity": "basic",
+  "feature": "basic-reflow",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-001",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-001",
+              "manufacturingOrderId": "mo-001",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T16:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-001",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-001",
+              "itemId": "item-123",
+              "quantity": 100,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-002",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-002",
+              "manufacturingOrderId": "mo-002",
+              "workCenterId": "wc-001",
+              "startDate": "2024-02-10T09:00:00Z",
+              "endDate": "2024-02-10T17:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-002",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-002",
+              "itemId": "item-456",
+              "quantity": 200,
+              "dueDate": "2024-02-15T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-003",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-003",
+              "manufacturingOrderId": "mo-003",
+              "workCenterId": "wc-002",
+              "startDate": "2024-03-05T10:00:00Z",
+              "endDate": "2024-03-05T14:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-002",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line B",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-003",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-003",
+              "itemId": "item-789",
+              "quantity": 50,
+              "dueDate": "2024-03-10T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-004",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-004",
+              "manufacturingOrderId": "mo-004",
+              "workCenterId": "wc-001",
+              "startDate": "2024-04-20T08:00:00Z",
+              "endDate": "2024-04-20T20:00:00Z",
+              "durationMinutes": 720,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-004",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-004",
+              "itemId": "item-111",
+              "quantity": 300,
+              "dueDate": "2024-04-25T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order", "long-duration"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-005",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-005",
+              "manufacturingOrderId": "mo-005",
+              "workCenterId": "wc-003",
+              "startDate": "2024-05-01T06:00:00Z",
+              "endDate": "2024-05-01T10:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-003",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line C",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-005",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-005",
+              "itemId": "item-222",
+              "quantity": 75,
+              "dueDate": "2024-05-05T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order", "early-start"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-006",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-006",
+              "manufacturingOrderId": "mo-006",
+              "workCenterId": "wc-001",
+              "startDate": "2024-06-15T12:00:00Z",
+              "endDate": "2024-06-15T13:00:00Z",
+              "durationMinutes": 60,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-006",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-006",
+              "itemId": "item-333",
+              "quantity": 25,
+              "dueDate": "2024-06-20T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order", "short-duration"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-007",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-007",
+              "manufacturingOrderId": "mo-007",
+              "workCenterId": "wc-002",
+              "startDate": "2024-07-10T14:00:00Z",
+              "endDate": "2024-07-10T18:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-002",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line B",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-007",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-007",
+              "itemId": "item-444",
+              "quantity": 150,
+              "dueDate": "2024-07-15T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order", "afternoon"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-008",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-008",
+              "manufacturingOrderId": "mo-008",
+              "workCenterId": "wc-001",
+              "startDate": "2024-08-05T07:00:00Z",
+              "endDate": "2024-08-05T15:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-008",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-008",
+              "itemId": "item-555",
+              "quantity": 80,
+              "dueDate": "2024-08-10T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-009",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-009",
+              "manufacturingOrderId": "mo-009",
+              "workCenterId": "wc-003",
+              "startDate": "2024-09-12T09:00:00Z",
+              "endDate": "2024-09-12T11:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-003",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line C",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-009",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-009",
+              "itemId": "item-666",
+              "quantity": 40,
+              "dueDate": "2024-09-17T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order", "short-duration"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-010",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-010",
+              "manufacturingOrderId": "mo-010",
+              "workCenterId": "wc-002",
+              "startDate": "2024-10-20T08:00:00Z",
+              "endDate": "2024-10-20T16:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-002",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line B",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-010",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-010",
+              "itemId": "item-777",
+              "quantity": 120,
+              "dueDate": "2024-10-25T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-011",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-011",
+              "manufacturingOrderId": "mo-011",
+              "workCenterId": "wc-001",
+              "startDate": "2024-11-08T11:00:00Z",
+              "endDate": "2024-11-08T19:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-011",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-011",
+              "itemId": "item-888",
+              "quantity": 90,
+              "dueDate": "2024-11-13T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order", "late-start"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-012",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-012",
+              "manufacturingOrderId": "mo-012",
+              "workCenterId": "wc-003",
+              "startDate": "2024-12-15T06:00:00Z",
+              "endDate": "2024-12-15T14:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-003",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line C",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-012",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-012",
+              "itemId": "item-999",
+              "quantity": 60,
+              "dueDate": "2024-12-20T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order", "early-morning"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-013",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-013",
+              "manufacturingOrderId": "mo-013",
+              "workCenterId": "wc-001",
+              "startDate": "2025-01-10T13:00:00Z",
+              "endDate": "2025-01-10T17:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-013",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-013",
+              "itemId": "item-101",
+              "quantity": 110,
+              "dueDate": "2025-01-15T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-014",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-014",
+              "manufacturingOrderId": "mo-014",
+              "workCenterId": "wc-002",
+              "startDate": "2025-02-18T08:30:00Z",
+              "endDate": "2025-02-18T12:30:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-002",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line B",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-014",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-014",
+              "itemId": "item-202",
+              "quantity": 55,
+              "dueDate": "2025-02-23T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order", "half-hour-start"],
+        "shouldSucceed": true
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-015",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-015",
+              "manufacturingOrderId": "mo-015",
+              "workCenterId": "wc-003",
+              "startDate": "2025-03-25T10:15:00Z",
+              "endDate": "2025-03-25T18:15:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-003",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line C",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-015",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-015",
+              "itemId": "item-303",
+              "quantity": 130,
+              "dueDate": "2025-03-30T17:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedConstraints": {
+        "allWorkOrdersMustHaveValidDates": true,
+        "allWorkOrdersMustCompleteBeforeDueDate": true,
+        "noWorkOrderOverlaps": true,
+        "workCenterAvailability": true,
+        "dependenciesRespected": false,
+        "shiftsRespected": false,
+        "maintenanceWindowsRespected": false
+      },
+      "expectedChanges": {
+        "minChanges": 0,
+        "maxChanges": 1,
+        "specificChanges": []
+      },
+      "metadata": {
+        "tags": ["basic", "single-work-order", "quarter-hour-start"],
+        "shouldSucceed": true
+      }
+    }
+  ]
+}
