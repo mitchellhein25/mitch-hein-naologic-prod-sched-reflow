@@ -66,3 +66,17 @@ export function isWorkCenter(doc: Document): doc is WorkCenterDocument {
 export function isManufacturingOrder(doc: Document): doc is ManufacturingOrderDocument {
   return doc.docType === MANUFACTURING_ORDER_DOC_TYPE;
 }
+
+export interface WorkOrderChange {
+  workOrderId: string;
+  oldStartDate: string;
+  newStartDate: string;
+  oldEndDate: string;
+  newEndDate: string;
+}
+
+export interface ReflowResult {
+  updatedWorkOrders: WorkOrderDocument[];
+  changes: WorkOrderChange[];
+  explanation: string;
+}
