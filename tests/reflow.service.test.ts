@@ -29,8 +29,12 @@ describe('ReflowService - Basic Reflow Tests', () => {
             example.input.manufacturingOrders
           );
 
-          // Validate that all constraints are satisfied
-          const constraintValidation = validateConstraints(result, example.input);
+          // Validate constraints or impossible status based on test type
+          const constraintValidation = validateConstraints(
+            result, 
+            example.input, 
+            example.expectedFailureReason
+          );
 
           if (!constraintValidation.valid) {
             throw new Error(
@@ -45,6 +49,15 @@ describe('ReflowService - Basic Reflow Tests', () => {
           const resultWorkOrderIds = new Set(result.updatedWorkOrders.map(wo => wo.docId));
           const inputWorkOrderIds = new Set(example.input.workOrders.map(wo => wo.docId));
           expect(resultWorkOrderIds).toEqual(inputWorkOrderIds);
+
+          // For impossible scenarios, verify that impossible flag is set
+          if (example.expectedFailureReason) {
+            expect(result.impossible).toBe(true);
+            expect(result.explanation).toContain('impossible');
+          } else {
+            // For solvable scenarios, verify that impossible flag is false
+            expect(result.impossible).toBe(false);
+          }
         });
       }
     );

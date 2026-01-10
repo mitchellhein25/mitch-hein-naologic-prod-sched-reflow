@@ -16,6 +16,7 @@ export interface TestInput {
 
 export interface TestExample {
   input: TestInput;
+  expectedFailureReason?: string;
 }
 
 export interface TestCase {
@@ -55,13 +56,44 @@ export function loadTestCases(directory: string): TestCase[] {
 
 /**
  * Validates that the reflow result satisfies all constraints.
- * Tests pass/fail based solely on whether all constraints are satisfied.
+ * For impossible scenarios (where expectedFailureReason is provided), checks that
+ * the reflow service correctly identified the schedule as impossible.
+ * Tests pass/fail based solely on whether all constraints are satisfied (or correctly identified as impossible).
  */
 export function validateConstraints(
   result: ReflowResult,
-  input: TestInput
+  input: TestInput,
+  expectedFailureReason?: string
 ): { valid: boolean; errors: string[] } {
   const constraintChecker = new ConstraintChecker();
+
+  // If this is an impossible scenario, check that the service correctly identified it
+  if (expectedFailureReason !== undefined) {
+    if (!result.impossible) {
+      return {
+        valid: false,
+        errors: [
+          `Expected schedule to be identified as impossible (${expectedFailureReason}), but reflow service returned impossible=false`
+        ]
+      };
+    }
+    // For impossible scenarios, we don't require constraints to be satisfied
+    // but we verify that the service correctly detected impossibility
+    return {
+      valid: true,
+      errors: []
+    };
+  }
+
+  // For normal scenarios, validate all constraints are satisfied
+  if (result.impossible) {
+    return {
+      valid: false,
+      errors: [
+        'Reflow service incorrectly identified schedule as impossible when it should be solvable'
+      ]
+    };
+  }
 
   // Validate all constraints (valid dates, due dates, overlaps, work center availability)
   return constraintChecker.validateAllConstraints(

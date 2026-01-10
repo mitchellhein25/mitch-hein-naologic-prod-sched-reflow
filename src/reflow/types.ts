@@ -79,4 +79,5 @@ export interface ReflowResult {
   updatedWorkOrders: WorkOrderDocument[];
   changes: WorkOrderChange[];
   explanation: string;
+  impossible: boolean;
 }

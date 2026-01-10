@@ -1,0 +1,434 @@
+{
+  "name": "Impossible schedules that cannot be satisfied",
+  "description": "Test scenarios where constraints cannot all be satisfied simultaneously",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-impossible-001",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-001",
+              "manufacturingOrderId": "mo-impossible-001",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T08:00:00Z",
+              "endDate": "2024-01-10T16:00:00Z",
+              "durationMinutes": 1440,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-impossible-001",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-001",
+              "itemId": "item-impossible-001",
+              "quantity": 50,
+              "dueDate": "2024-01-10T16:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedFailureReason": "Work order requires 1440 minutes (24 hours) but only 8 hours available before due date"
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-impossible-002",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-002",
+              "manufacturingOrderId": "mo-impossible-002",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T08:00:00Z",
+              "endDate": "2024-01-10T20:00:00Z",
+              "durationMinutes": 720,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-impossible-002",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-002",
+              "itemId": "item-impossible-002",
+              "quantity": 60,
+              "dueDate": "2024-01-10T12:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedFailureReason": "Work order requires 12 hours but only 4 hours available before due date, and cannot be moved earlier than original start"
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-impossible-003-001",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-003-001",
+              "manufacturingOrderId": "mo-impossible-003-001",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T08:00:00Z",
+              "endDate": "2024-01-10T16:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-impossible-003-002",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-003-002",
+              "manufacturingOrderId": "mo-impossible-003-002",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T10:00:00Z",
+              "endDate": "2024-01-10T18:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-impossible-003-003",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-003-003",
+              "manufacturingOrderId": "mo-impossible-003-003",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T12:00:00Z",
+              "endDate": "2024-01-10T20:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-impossible-003-001",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-003-001",
+              "itemId": "item-impossible-003-001",
+              "quantity": 50,
+              "dueDate": "2024-01-10T18:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-impossible-003-002",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-003-002",
+              "itemId": "item-impossible-003-002",
+              "quantity": 60,
+              "dueDate": "2024-01-10T20:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-impossible-003-003",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-003-003",
+              "itemId": "item-impossible-003-003",
+              "quantity": 70,
+              "dueDate": "2024-01-10T22:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedFailureReason": "Three overlapping work orders on same center require 1440 minutes total (24 hours) but only 14 hours available before latest due date. Sequential packing will push third work order past its due date"
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-impossible-004-001",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-004-001",
+              "manufacturingOrderId": "mo-impossible-004-001",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T08:00:00Z",
+              "endDate": "2024-01-10T12:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-impossible-004-002",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-004-002",
+              "manufacturingOrderId": "mo-impossible-004-002",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T10:00:00Z",
+              "endDate": "2024-01-10T16:00:00Z",
+              "durationMinutes": 360,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-impossible-004-001",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-004-001",
+              "itemId": "item-impossible-004-001",
+              "quantity": 50,
+              "dueDate": "2024-01-10T12:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-impossible-004-002",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-004-002",
+              "itemId": "item-impossible-004-002",
+              "quantity": 60,
+              "dueDate": "2024-01-10T14:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedFailureReason": "First work order must end by 12:00, second must end by 14:00. Sequential packing: first ends at 12:00, second starts at 12:00 and needs 6 hours (ends at 18:00), which violates second work order's 14:00 due date"
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-impossible-005",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-005",
+              "manufacturingOrderId": "mo-impossible-005",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T00:00:00Z",
+              "endDate": "2024-01-10T08:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-impossible-005",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-005",
+              "itemId": "item-impossible-005",
+              "quantity": 50,
+              "dueDate": "2024-01-09T20:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedFailureReason": "Work order starts at earliest possible time (2024-01-10T00:00:00Z) but due date is in the past (2024-01-09T20:00:00Z). Cannot move earlier than start date"
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-impossible-006-001",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-006-001",
+              "manufacturingOrderId": "mo-impossible-006-001",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T08:00:00Z",
+              "endDate": "2024-01-10T18:00:00Z",
+              "durationMinutes": 600,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-impossible-006-002",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-006-002",
+              "manufacturingOrderId": "mo-impossible-006-002",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T10:00:00Z",
+              "endDate": "2024-01-10T20:00:00Z",
+              "durationMinutes": 600,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-impossible-006-001",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-006-001",
+              "itemId": "item-impossible-006-001",
+              "quantity": 50,
+              "dueDate": "2024-01-10T20:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-impossible-006-002",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-006-002",
+              "itemId": "item-impossible-006-002",
+              "quantity": 60,
+              "dueDate": "2024-01-10T22:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedFailureReason": "Two overlapping 10-hour work orders on same center. First must end by 20:00, second by 22:00. Sequential packing: first ends at 20:00, second needs 10 hours (would end at 06:00 next day), violating second work order's 22:00 due date"
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-impossible-007-001",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-007-001",
+              "manufacturingOrderId": "mo-impossible-007-001",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T08:00:00Z",
+              "endDate": "2024-01-11T08:00:00Z",
+              "durationMinutes": 1440,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-impossible-007-002",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-IMPOSSIBLE-007-002",
+              "manufacturingOrderId": "mo-impossible-007-002",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T12:00:00Z",
+              "endDate": "2024-01-11T12:00:00Z",
+              "durationMinutes": 1440,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-impossible-007-001",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-007-001",
+              "itemId": "item-impossible-007-001",
+              "quantity": 50,
+              "dueDate": "2024-01-11T08:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-impossible-007-002",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-IMPOSSIBLE-007-002",
+              "itemId": "item-impossible-007-002",
+              "quantity": 60,
+              "dueDate": "2024-01-11T12:00:00Z"
+            }
+          }
+        ]
+      },
+      "expectedFailureReason": "Two overlapping 24-hour work orders on same center both due within 24-28 hours. Total duration exceeds available time window. Sequential packing impossible without violating due dates"
+    }
+  ]
+}
