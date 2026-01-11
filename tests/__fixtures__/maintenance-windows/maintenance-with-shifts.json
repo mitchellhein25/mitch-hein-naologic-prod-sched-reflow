@@ -1,0 +1,181 @@
+{
+  "name": "Interaction between maintenance windows and shifts",
+  "description": "Work orders that pause for both shift boundaries and maintenance windows",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-007",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-007",
+              "manufacturingOrderId": "mo-mw-007",
+              "workCenterId": "wc-mw-007",
+              "startDate": "2024-01-15T15:00:00Z",
+              "endDate": "2024-01-16T11:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-007",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Shifts and Maintenance",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 8,
+                  "endHour": 17
+                }
+              ],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-16T09:00:00Z",
+                  "endDate": "2024-01-16T10:00:00Z",
+                  "reason": "Morning maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-007",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-007",
+              "itemId": "item-mw-007",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-008",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-008",
+              "manufacturingOrderId": "mo-mw-008",
+              "workCenterId": "wc-mw-008",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-008",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Maintenance Within Shift",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                }
+              ],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T12:00:00Z",
+                  "endDate": "2024-01-15T13:00:00Z",
+                  "reason": "Lunch maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-008",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-008",
+              "itemId": "item-mw-008",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-009",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-009",
+              "manufacturingOrderId": "mo-mw-009",
+              "workCenterId": "wc-mw-009",
+              "startDate": "2024-01-15T14:00:00Z",
+              "endDate": "2024-01-16T12:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-009",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Maintenance Spanning Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 8,
+                  "endHour": 17
+                }
+              ],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T16:00:00Z",
+                  "endDate": "2024-01-16T09:00:00Z",
+                  "reason": "Overnight maintenance spanning shift boundary"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-009",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-009",
+              "itemId": "item-mw-009",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

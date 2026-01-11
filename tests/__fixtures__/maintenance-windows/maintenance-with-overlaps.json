@@ -1,0 +1,254 @@
+{
+  "name": "Maintenance windows with overlap constraints",
+  "description": "Multiple work orders on same center that must not overlap and account for maintenance",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-020",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-020",
+              "manufacturingOrderId": "mo-mw-020",
+              "workCenterId": "wc-mw-020",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T14:00:00Z",
+              "durationMinutes": 180,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-mw-021",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-021",
+              "manufacturingOrderId": "mo-mw-021",
+              "workCenterId": "wc-mw-020",
+              "startDate": "2024-01-15T14:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-020",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Multiple Work Orders and Maintenance",
+              "shifts": [],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T12:00:00Z",
+                  "endDate": "2024-01-15T14:00:00Z",
+                  "reason": "Planned maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-020",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-020",
+              "itemId": "item-mw-020",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-mw-021",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-021",
+              "itemId": "item-mw-021",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-022",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-022",
+              "manufacturingOrderId": "mo-mw-022",
+              "workCenterId": "wc-mw-022",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 300,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-mw-023",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-023",
+              "manufacturingOrderId": "mo-mw-023",
+              "workCenterId": "wc-mw-022",
+              "startDate": "2024-01-15T18:00:00Z",
+              "endDate": "2024-01-16T12:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-mw-024",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-024",
+              "manufacturingOrderId": "mo-mw-024",
+              "workCenterId": "wc-mw-022",
+              "startDate": "2024-01-16T12:00:00Z",
+              "endDate": "2024-01-16T18:00:00Z",
+              "durationMinutes": 180,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-022",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Sequential Work Orders and Maintenance",
+              "shifts": [],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T12:00:00Z",
+                  "endDate": "2024-01-15T14:00:00Z",
+                  "reason": "Afternoon maintenance"
+                },
+                {
+                  "startDate": "2024-01-16T10:00:00Z",
+                  "endDate": "2024-01-16T12:00:00Z",
+                  "reason": "Morning maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-022",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-022",
+              "itemId": "item-mw-022",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-mw-023",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-023",
+              "itemId": "item-mw-023",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-mw-024",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-024",
+              "itemId": "item-mw-024",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-025",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-025",
+              "manufacturingOrderId": "mo-mw-025",
+              "workCenterId": "wc-mw-025",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T14:00:00Z",
+              "durationMinutes": 180,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-mw-026",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-026",
+              "manufacturingOrderId": "mo-mw-026",
+              "workCenterId": "wc-mw-025",
+              "startDate": "2024-01-15T14:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-025",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Overlapping Work Orders and Maintenance",
+              "shifts": [],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T11:00:00Z",
+                  "endDate": "2024-01-15T13:00:00Z",
+                  "reason": "Mid-day maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-025",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-025",
+              "itemId": "item-mw-025",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-mw-026",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-026",
+              "itemId": "item-mw-026",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

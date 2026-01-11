@@ -1,0 +1,173 @@
+{
+  "name": "Work orders spanning multiple maintenance windows",
+  "description": "Work orders that pause/resume across multiple maintenance periods",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-004",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-004",
+              "manufacturingOrderId": "mo-mw-004",
+              "workCenterId": "wc-mw-004",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-004",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Multiple Maintenance",
+              "shifts": [],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T10:00:00Z",
+                  "endDate": "2024-01-15T11:00:00Z",
+                  "reason": "Morning maintenance"
+                },
+                {
+                  "startDate": "2024-01-15T14:00:00Z",
+                  "endDate": "2024-01-15T15:00:00Z",
+                  "reason": "Afternoon maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-004",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-004",
+              "itemId": "item-mw-004",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-005",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-005",
+              "manufacturingOrderId": "mo-mw-005",
+              "workCenterId": "wc-mw-005",
+              "startDate": "2024-01-15T14:00:00Z",
+              "endDate": "2024-01-17T10:00:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-005",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Multi-Day Maintenance",
+              "shifts": [],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T17:00:00Z",
+                  "endDate": "2024-01-16T08:00:00Z",
+                  "reason": "Overnight maintenance"
+                },
+                {
+                  "startDate": "2024-01-16T12:00:00Z",
+                  "endDate": "2024-01-16T13:00:00Z",
+                  "reason": "Lunch maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-005",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-005",
+              "itemId": "item-mw-005",
+              "quantity": 100,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-006",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-006",
+              "manufacturingOrderId": "mo-mw-006",
+              "workCenterId": "wc-mw-006",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T20:00:00Z",
+              "durationMinutes": 180,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-006",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Frequent Maintenance",
+              "shifts": [],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T09:00:00Z",
+                  "endDate": "2024-01-15T09:30:00Z",
+                  "reason": "Quick maintenance 1"
+                },
+                {
+                  "startDate": "2024-01-15T11:00:00Z",
+                  "endDate": "2024-01-15T11:30:00Z",
+                  "reason": "Quick maintenance 2"
+                },
+                {
+                  "startDate": "2024-01-15T13:00:00Z",
+                  "endDate": "2024-01-15T13:30:00Z",
+                  "reason": "Quick maintenance 3"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-006",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-006",
+              "itemId": "item-mw-006",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

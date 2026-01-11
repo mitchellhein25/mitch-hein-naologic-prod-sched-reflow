@@ -1,0 +1,209 @@
+{
+  "name": "Maintenance windows with dependency constraints",
+  "description": "Dependent work orders that must wait through maintenance windows",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-010",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-010",
+              "manufacturingOrderId": "mo-mw-010",
+              "workCenterId": "wc-mw-010",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T12:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-mw-011",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-011",
+              "manufacturingOrderId": "mo-mw-010",
+              "workCenterId": "wc-mw-010",
+              "startDate": "2024-01-15T12:00:00Z",
+              "endDate": "2024-01-15T16:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": ["wo-mw-010"]
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-010",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Maintenance and Dependencies",
+              "shifts": [],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T12:00:00Z",
+                  "endDate": "2024-01-15T14:00:00Z",
+                  "reason": "Planned maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-010",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-010",
+              "itemId": "item-mw-010",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-012",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-012",
+              "manufacturingOrderId": "mo-mw-012",
+              "workCenterId": "wc-mw-012",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T11:45:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-mw-013",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-013",
+              "manufacturingOrderId": "mo-mw-012",
+              "workCenterId": "wc-mw-012",
+              "startDate": "2024-01-15T14:00:00Z",
+              "endDate": "2024-01-15T16:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": ["wo-mw-012"]
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-012",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Dependency Before Maintenance",
+              "shifts": [],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T12:00:00Z",
+                  "endDate": "2024-01-15T14:00:00Z",
+                  "reason": "Planned maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-012",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-012",
+              "itemId": "item-mw-012",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-mw-014",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-014",
+              "manufacturingOrderId": "mo-mw-014",
+              "workCenterId": "wc-mw-014",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T14:00:00Z",
+              "durationMinutes": 180,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-mw-015",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-015",
+              "manufacturingOrderId": "mo-mw-014",
+              "workCenterId": "wc-mw-014",
+              "startDate": "2024-01-15T14:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": ["wo-mw-014"]
+            }
+          },
+          {
+            "docId": "wo-mw-016",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MW-016",
+              "manufacturingOrderId": "mo-mw-014",
+              "workCenterId": "wc-mw-014",
+              "startDate": "2024-01-15T18:00:00Z",
+              "endDate": "2024-01-16T10:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": ["wo-mw-015"]
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-mw-014",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Dependency Chain and Maintenance",
+              "shifts": [],
+              "maintenanceWindows": [
+                {
+                  "startDate": "2024-01-15T11:00:00Z",
+                  "endDate": "2024-01-15T13:00:00Z",
+                  "reason": "Mid-day maintenance"
+                }
+              ]
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-mw-014",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MW-014",
+              "itemId": "item-mw-014",
+              "quantity": 100,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

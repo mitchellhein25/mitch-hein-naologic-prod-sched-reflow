@@ -69,3 +69,4 @@ function createTestSuite(suiteName: string, fixturesDirectory: string) {
 createTestSuite('ReflowService - Basic Reflow Tests', 'basic_reflow');
 createTestSuite('ReflowService - Dependencies Tests', 'dependencies');
 createTestSuite('ReflowService - Shift Logic Tests', 'shifts');
+createTestSuite('ReflowService - Maintenance Windows Tests', 'maintenance-windows');
