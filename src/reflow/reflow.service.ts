@@ -7,7 +7,7 @@ import {
   WorkCenterShift,
   MaintenanceWindow
 } from "./types";
-import { parseDate, isAfter } from "../utils/date-utils";
+import { parseDate, isAfter, isEqual } from "../utils/date-utils";
 import { DateTime } from "luxon";
 
 export class ReflowService {
@@ -65,14 +65,25 @@ export class ReflowService {
     const changes: WorkOrderChange[] = [];
     updatedWorkOrders.forEach(wo => {
       const original = originalDates.get(wo.docId);
-      if (original && (original.startDate !== wo.data.startDate || original.endDate !== wo.data.endDate)) {
-        changes.push({
-          workOrderId: wo.docId,
-          oldStartDate: original.startDate,
-          newStartDate: wo.data.startDate,
-          oldEndDate: original.endDate,
-          newEndDate: wo.data.endDate
-        });
+      if (original) {
+        const originalStart = parseDate(original.startDate);
+        const originalEnd = parseDate(original.endDate);
+        const newStart = parseDate(wo.data.startDate);
+        const newEnd = parseDate(wo.data.endDate);
+        
+        // Only record a change if the actual DateTime values differ (not just string format)
+        const startChanged = originalStart && newStart && !isEqual(originalStart, newStart);
+        const endChanged = originalEnd && newEnd && !isEqual(originalEnd, newEnd);
+        
+        if (startChanged || endChanged) {
+          changes.push({
+            workOrderId: wo.docId,
+            oldStartDate: original.startDate,
+            newStartDate: wo.data.startDate,
+            oldEndDate: original.endDate,
+            newEndDate: wo.data.endDate
+          });
+        }
       }
     });
 
