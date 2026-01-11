@@ -3,7 +3,8 @@ import {
   ReflowResult, 
   WorkCenterDocument, 
   WorkOrderDocument,
-  WorkOrderChange 
+  WorkOrderChange,
+  WorkCenterShift
 } from "./types";
 import { parseDate, isAfter } from "../utils/date-utils";
 import { DateTime } from "luxon";
@@ -29,23 +30,32 @@ export class ReflowService {
       });
     });
 
-    // Build manufacturing orders lookup map (exact match + prefix match support)
+    // Build manufacturing orders lookup map
     const manufacturingOrdersMap = new Map<string, ManufacturingOrderDocument>();
     manufacturingOrders.forEach(mo => {
       manufacturingOrdersMap.set(mo.docId, mo);
     });
 
+    // Build work centers lookup map
+    const workCentersMap = new Map<string, WorkCenterDocument>();
+    workCenters.forEach(wc => {
+      workCentersMap.set(wc.docId, wc);
+    });
+
+    // Phase 0: Normalize all end dates to account for shifts
+    this.normalizeEndDatesForShifts(updatedWorkOrders, workCentersMap);
+
     // Phase 1: Resolve due date violations
-    this.resolveDueDateViolations(updatedWorkOrders, manufacturingOrdersMap);
+    this.resolveDueDateViolations(updatedWorkOrders, manufacturingOrdersMap, workCentersMap);
 
     // Phase 2: Resolve dependencies (must happen before overlaps)
-    this.resolveDependencies(updatedWorkOrders);
+    this.resolveDependencies(updatedWorkOrders, workCentersMap);
 
     // Phase 2.5: Optimize dependencies to help dependents meet due dates
-    this.optimizeDependenciesForDueDates(updatedWorkOrders, manufacturingOrdersMap, originalDates);
+    this.optimizeDependenciesForDueDates(updatedWorkOrders, manufacturingOrdersMap, originalDates, workCentersMap);
 
     // Phase 3: Resolve overlaps per work center
-    this.resolveOverlaps(updatedWorkOrders);
+    this.resolveOverlaps(updatedWorkOrders, workCentersMap);
 
     // Check if the schedule is impossible (constraints cannot be satisfied)
     const impossible = this.checkImpossibility(updatedWorkOrders, manufacturingOrdersMap, originalDates);
@@ -88,18 +98,250 @@ export class ReflowService {
   }
 
   /**
+   * Find work center for a work order
+   */
+  private findWorkCenter(
+    workOrder: WorkOrderDocument,
+    workCentersMap: Map<string, WorkCenterDocument>
+  ): WorkCenterDocument | null {
+    const workCenterId = workOrder.data.workCenterId;
+    return workCentersMap.get(workCenterId) || null;
+  }
+
+  /**
+   * Find the next shift on the same day that starts after the current time
+   */
+  private findNextShiftOnSameDay(
+    shiftsForDay: WorkCenterShift[],
+    currentTime: DateTime,
+    currentDayStart: DateTime,
+    excludeShift?: WorkCenterShift
+  ): DateTime | null {
+    let nextShiftStartTime: DateTime | null = null;
+
+    for (const shift of shiftsForDay) {
+      if (excludeShift && shift === excludeShift) continue;
+      
+      const shiftStartTime = currentDayStart.plus({ hours: shift.startHour });
+      if (shiftStartTime > currentTime) {
+        if (!nextShiftStartTime || shiftStartTime < nextShiftStartTime) {
+          nextShiftStartTime = shiftStartTime;
+        }
+      }
+    }
+
+    return nextShiftStartTime;
+  }
+
+  /**
+   * Move to the next day and find the earliest shift for that day
+   */
+  private moveToNextDayWithShift(
+    currentTime: DateTime,
+    shifts: WorkCenterShift[]
+  ): DateTime | null {
+    let nextDay = currentTime.plus({ days: 1 }).startOf('day');
+    
+    for (let i = 0; i < 7; i++) {
+      const nextDayOfWeek = nextDay.weekday;
+      const nextDayShifts = shifts.filter(s => s.dayOfWeek === nextDayOfWeek);
+      
+      if (nextDayShifts.length > 0) {
+        const earliestShift = nextDayShifts.reduce((earliest, shift) => {
+          return shift.startHour < earliest.startHour ? shift : earliest;
+        });
+        return nextDay.plus({ hours: earliestShift.startHour });
+      }
+      
+      nextDay = nextDay.plus({ days: 1 });
+    }
+    
+    return null;
+  }
+
+  /**
+   * Find the next available shift, checking same day first, then moving to next day
+   */
+  private findNextAvailableShift(
+    shiftsForDay: WorkCenterShift[],
+    currentTime: DateTime,
+    currentDayStart: DateTime,
+    shifts: WorkCenterShift[],
+    excludeShift?: WorkCenterShift
+  ): DateTime | null {
+    const nextShiftOnSameDay = this.findNextShiftOnSameDay(
+      shiftsForDay,
+      currentTime,
+      currentDayStart,
+      excludeShift
+    );
+
+    if (nextShiftOnSameDay) {
+      return nextShiftOnSameDay;
+    }
+
+    return this.moveToNextDayWithShift(currentTime, shifts);
+  }
+
+  /**
+   * Calculate the expected end date for a work order accounting for shift pauses
+   * Work orders pause outside shift hours and resume in the next shift
+   * Supports multiple shifts per day
+   */
+  private calculateEndDateWithShifts(
+    startDate: DateTime,
+    durationMinutes: number,
+    shifts: WorkCenterShift[]
+  ): DateTime | null {
+    if (shifts.length === 0) {
+      return startDate.plus({ minutes: durationMinutes });
+    }
+
+    let currentTime = startDate;
+    let remainingWorkMinutes = durationMinutes;
+    const maxIterations = 1000;
+    let iterations = 0;
+
+    while (remainingWorkMinutes > 0 && iterations < maxIterations) {
+      iterations++;
+
+      const currentDayOfWeek = currentTime.weekday;
+      const shiftsForDay = shifts.filter(s => s.dayOfWeek === currentDayOfWeek);
+      
+      if (shiftsForDay.length === 0) {
+        currentTime = currentTime.plus({ days: 1 }).startOf('day');
+        continue;
+      }
+
+      let activeShift: WorkCenterShift | null = null;
+      const currentDayStart = currentTime.startOf('day');
+
+      for (const shift of shiftsForDay) {
+        const shiftStartTime = currentDayStart.plus({ hours: shift.startHour });
+        let shiftEndTime: DateTime;
+        let isSpanningMidnight = false;
+        
+        if (shift.endHour < shift.startHour) {
+          shiftEndTime = currentDayStart.plus({ days: 1 }).plus({ hours: shift.endHour });
+          isSpanningMidnight = true;
+        } else {
+          shiftEndTime = currentDayStart.plus({ hours: shift.endHour });
+        }
+
+        if (isSpanningMidnight) {
+          if (currentTime >= shiftStartTime || currentTime < shiftEndTime) {
+            activeShift = shift;
+            break;
+          }
+        } else {
+          if (currentTime >= shiftStartTime && currentTime < shiftEndTime) {
+            activeShift = shift;
+            break;
+          }
+        }
+      }
+
+      if (!activeShift) {
+        const nextShiftStartTime = this.findNextAvailableShift(
+          shiftsForDay,
+          currentTime,
+          currentDayStart,
+          shifts
+        );
+
+        if (!nextShiftStartTime) {
+          return null;
+        }
+
+        currentTime = nextShiftStartTime;
+        continue;
+      }
+
+      const shiftStartTime = currentDayStart.plus({ hours: activeShift.startHour });
+      let shiftEndTime: DateTime;
+      if (activeShift.endHour < activeShift.startHour) {
+        shiftEndTime = currentDayStart.plus({ days: 1 }).plus({ hours: activeShift.endHour });
+      } else {
+        shiftEndTime = currentDayStart.plus({ hours: activeShift.endHour });
+      }
+
+      const timeUntilShiftEnd = shiftEndTime.diff(currentTime, 'minutes').minutes;
+      const workDoneThisShift = Math.min(remainingWorkMinutes, timeUntilShiftEnd);
+      
+      remainingWorkMinutes -= workDoneThisShift;
+      currentTime = currentTime.plus({ minutes: workDoneThisShift });
+
+      if (remainingWorkMinutes <= 0) {
+        break;
+      }
+
+      const nextShiftStartTime = this.findNextAvailableShift(
+        shiftsForDay,
+        currentTime,
+        currentDayStart,
+        shifts,
+        activeShift
+      );
+
+      if (!nextShiftStartTime) {
+        return null;
+      }
+
+      currentTime = nextShiftStartTime;
+    }
+
+    if (iterations >= maxIterations) {
+      return null;
+    }
+
+    return currentTime;
+  }
+
+  /**
+   * Phase 0: Normalize all end dates to account for shifts
+   * Recalculate end dates for all work orders based on their start dates and shifts
+   */
+  private normalizeEndDatesForShifts(
+    workOrders: WorkOrderDocument[],
+    workCentersMap: Map<string, WorkCenterDocument>
+  ): void {
+    for (const workOrder of workOrders) {
+      const workCenter = this.findWorkCenter(workOrder, workCentersMap);
+      const shifts = workCenter?.data.shifts || [];
+      
+      const startDate = parseDate(workOrder.data.startDate);
+      if (!startDate) {
+        continue; // Skip invalid dates
+      }
+
+      const durationMinutes = workOrder.data.durationMinutes;
+      const calculatedEndDate = this.calculateEndDateWithShifts(startDate, durationMinutes, shifts);
+      if (calculatedEndDate) {
+        const newEndISO = calculatedEndDate.toISO();
+        if (newEndISO) {
+          workOrder.data.endDate = newEndISO;
+        }
+      }
+    }
+  }
+
+  /**
    * Phase 1: Resolve due date violations
    * Move work orders earlier so they complete before their manufacturing order's due date
    */
   private resolveDueDateViolations(
     workOrders: WorkOrderDocument[],
-    manufacturingOrdersMap: Map<string, ManufacturingOrderDocument>
+    manufacturingOrdersMap: Map<string, ManufacturingOrderDocument>,
+    workCentersMap: Map<string, WorkCenterDocument>
   ): void {
     for (const workOrder of workOrders) {
       const manufacturingOrder = this.findManufacturingOrder(workOrder, manufacturingOrdersMap);
       if (!manufacturingOrder) {
         continue; // Skip if manufacturing order not found
       }
+
+      const workCenter = this.findWorkCenter(workOrder, workCentersMap);
+      const shifts = workCenter?.data.shifts || [];
 
       const dueDateStr = manufacturingOrder.data.dueDate;
       const dueDate = parseDate(dueDateStr);
@@ -115,26 +357,32 @@ export class ReflowService {
         // Calculate new end date (at or before due date)
         const maxEndDate = dueDate;
         
-        // Calculate new start date based on duration
+        // Calculate new start date based on duration (simple calculation for reverse)
         const durationMinutes = workOrder.data.durationMinutes;
         const newStartDate = maxEndDate.minus({ minutes: durationMinutes });
 
         // Only move earlier if the new start is before or equal to original start
         // Never move later than original start date
         if (newStartDate <= originalStartDate) {
-          const newStartISO = newStartDate.toISO();
-          const maxEndISO = maxEndDate.toISO();
-          if (newStartISO && maxEndISO) {
-            workOrder.data.startDate = newStartISO;
-            workOrder.data.endDate = maxEndISO;
+          // Recalculate end date accounting for shifts
+          const calculatedEndDate = this.calculateEndDateWithShifts(newStartDate, durationMinutes, shifts);
+          if (calculatedEndDate) {
+            const newStartISO = newStartDate.toISO();
+            const newEndISO = calculatedEndDate.toISO();
+            if (newStartISO && newEndISO) {
+              workOrder.data.startDate = newStartISO;
+              workOrder.data.endDate = newEndISO;
+            }
           }
         } else {
           // If we can't move earlier enough, keep original start and adjust end
           // This ensures the duration is preserved, but may still violate due date (detected in checkImpossibility)
-          const newEndDate = originalStartDate.plus({ minutes: durationMinutes });
-          const newEndISO = newEndDate.toISO();
-          if (newEndISO) {
-            workOrder.data.endDate = newEndISO;
+          const calculatedEndDate = this.calculateEndDateWithShifts(originalStartDate, durationMinutes, shifts);
+          if (calculatedEndDate) {
+            const newEndISO = calculatedEndDate.toISO();
+            if (newEndISO) {
+              workOrder.data.endDate = newEndISO;
+            }
           }
         }
       }
@@ -148,7 +396,8 @@ export class ReflowService {
   private optimizeDependenciesForDueDates(
     workOrders: WorkOrderDocument[],
     manufacturingOrdersMap: Map<string, ManufacturingOrderDocument>,
-    originalDates: Map<string, { startDate: string; endDate: string }>
+    originalDates: Map<string, { startDate: string; endDate: string }>,
+    workCentersMap: Map<string, WorkCenterDocument>
   ): void {
     // Build a map of work orders by docId for efficient lookup
     const workOrdersMap = new Map<string, WorkOrderDocument>();
@@ -274,16 +523,21 @@ export class ReflowService {
         }
 
         // Move the dependency earlier
+        const dependencyWorkCenter = this.findWorkCenter(limitingDependency, workCentersMap);
+        const dependencyShifts = dependencyWorkCenter?.data.shifts || [];
         const newStartISO = newDependencyStartDate.toISO();
-        const newEndISO = newDependencyEndDate.toISO();
+        const calculatedEndDate = this.calculateEndDateWithShifts(newDependencyStartDate, dependencyDuration, dependencyShifts);
+        const newEndISO = calculatedEndDate?.toISO();
         if (newStartISO && newEndISO) {
           limitingDependency.data.startDate = newStartISO;
           limitingDependency.data.endDate = newEndISO;
           
           // Update the dependent work order to start after the dependency ends
+          const workCenter = this.findWorkCenter(workOrder, workCentersMap);
+          const shifts = workCenter?.data.shifts || [];
           const newDependentStartISO = newDependencyEndDate.toISO();
-          const newDependentEndDate = newDependencyEndDate.plus({ minutes: durationMinutes });
-          const newDependentEndISO = newDependentEndDate.toISO();
+          const newDependentEndDate = this.calculateEndDateWithShifts(newDependencyEndDate, durationMinutes, shifts);
+          const newDependentEndISO = newDependentEndDate?.toISO();
           
           if (newDependentStartISO && newDependentEndISO) {
             workOrder.data.startDate = newDependentStartISO;
@@ -300,7 +554,10 @@ export class ReflowService {
    * Phase 2: Resolve dependencies
    * Move dependent work orders to start after all their dependencies end
    */
-  private resolveDependencies(workOrders: WorkOrderDocument[]): void {
+  private resolveDependencies(
+    workOrders: WorkOrderDocument[],
+    workCentersMap: Map<string, WorkCenterDocument>
+  ): void {
     // Build a map of work orders by docId for efficient lookup
     const workOrdersMap = new Map<string, WorkOrderDocument>();
     for (const workOrder of workOrders) {
@@ -351,13 +608,17 @@ export class ReflowService {
         // If we found dependencies, check if work order needs to be moved
         if (latestDependencyEnd && startDate < latestDependencyEnd) {
           // Move work order to start after all dependencies end
+          const workCenter = this.findWorkCenter(workOrder, workCentersMap);
+          const shifts = workCenter?.data.shifts || [];
           const newStartISO = latestDependencyEnd.toISO();
           if (newStartISO) {
             workOrder.data.startDate = newStartISO;
-            const newEndDate = latestDependencyEnd.plus({ minutes: durationMinutes });
-            const newEndISO = newEndDate.toISO();
-            if (newEndISO) {
-              workOrder.data.endDate = newEndISO;
+            const newEndDate = this.calculateEndDateWithShifts(latestDependencyEnd, durationMinutes, shifts);
+            if (newEndDate) {
+              const newEndISO = newEndDate.toISO();
+              if (newEndISO) {
+                workOrder.data.endDate = newEndISO;
+              }
             }
             changed = true;
           }
@@ -370,7 +631,10 @@ export class ReflowService {
    * Phase 3: Resolve overlaps per work center
    * Pack work orders sequentially within each work center
    */
-  private resolveOverlaps(workOrders: WorkOrderDocument[]): void {
+  private resolveOverlaps(
+    workOrders: WorkOrderDocument[],
+    workCentersMap: Map<string, WorkCenterDocument>
+  ): void {
     // Group work orders by work center
     const workOrdersByCenter = new Map<string, WorkOrderDocument[]>();
     for (const workOrder of workOrders) {
@@ -409,14 +673,19 @@ export class ReflowService {
           // Check for overlap
           if (startDate < currentEnd) {
             // Overlap detected - move this work order to start after previous ends
+            const workCenter = this.findWorkCenter(workOrder, workCentersMap);
+            const shifts = workCenter?.data.shifts || [];
             const newStartISO = currentEnd.toISO();
             if (newStartISO) {
               workOrder.data.startDate = newStartISO;
             }
-            currentEnd = currentEnd.plus({ minutes: durationMinutes });
-            const endISO = currentEnd.toISO();
-            if (endISO) {
-              workOrder.data.endDate = endISO;
+            const calculatedEndDate = this.calculateEndDateWithShifts(currentEnd, durationMinutes, shifts);
+            if (calculatedEndDate) {
+              currentEnd = calculatedEndDate;
+              const endISO = calculatedEndDate.toISO();
+              if (endISO) {
+                workOrder.data.endDate = endISO;
+              }
             }
           } else {
             // No overlap - keep original times, update currentEnd for next iteration
