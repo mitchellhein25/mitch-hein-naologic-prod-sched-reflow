@@ -1,0 +1,74 @@
+{
+  "name": "Shift logic with dependencies",
+  "description": "Work orders with dependencies that span shift boundaries",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-shift-007",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-SHIFT-007",
+              "manufacturingOrderId": "mo-shift-007",
+              "workCenterId": "wc-shift-007",
+              "startDate": "2024-01-15T16:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-shift-008",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-SHIFT-008",
+              "manufacturingOrderId": "mo-shift-007",
+              "workCenterId": "wc-shift-007",
+              "startDate": "2024-01-15T18:00:00Z",
+              "endDate": "2024-01-15T20:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": ["wo-shift-007"]
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-shift-007",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 8,
+                  "endHour": 17
+                }
+              ],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-shift-007",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-SHIFT-007",
+              "itemId": "item-shift-007",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "name": "Shift logic with overlap constraints",
+  "description": "Multiple work orders on same center with shifts must not overlap",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-shift-005",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-SHIFT-005",
+              "manufacturingOrderId": "mo-shift-005",
+              "workCenterId": "wc-shift-005",
+              "startDate": "2024-01-15T16:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-shift-006",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-SHIFT-006",
+              "manufacturingOrderId": "mo-shift-006",
+              "workCenterId": "wc-shift-005",
+              "startDate": "2024-01-15T16:30:00Z",
+              "endDate": "2024-01-15T18:30:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-shift-005",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 8,
+                  "endHour": 17
+                }
+              ],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-shift-005",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-SHIFT-005",
+              "itemId": "item-shift-005",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          },
+          {
+            "docId": "mo-shift-006",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-SHIFT-006",
+              "itemId": "item-shift-006",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

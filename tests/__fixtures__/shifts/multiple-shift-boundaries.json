@@ -1,0 +1,144 @@
+{
+  "name": "Work order spanning multiple shift boundaries",
+  "description": "Work order that requires multiple pauses and resumes across several shifts",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-shift-002",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-SHIFT-002",
+              "manufacturingOrderId": "mo-shift-002",
+              "workCenterId": "wc-shift-002",
+              "startDate": "2024-01-15T14:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-shift-002",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 3,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 4,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 5,
+                  "startHour": 8,
+                  "endHour": 17
+                }
+              ],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-shift-002",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-SHIFT-002",
+              "itemId": "item-shift-002",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-shift-003",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-SHIFT-003",
+              "manufacturingOrderId": "mo-shift-003",
+              "workCenterId": "wc-shift-003",
+              "startDate": "2024-01-15T16:30:00Z",
+              "endDate": "2024-01-15T20:30:00Z",
+              "durationMinutes": 480,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-shift-003",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 3,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 4,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 5,
+                  "startHour": 8,
+                  "endHour": 17
+                }
+              ],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-shift-003",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-SHIFT-003",
+              "itemId": "item-shift-003",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

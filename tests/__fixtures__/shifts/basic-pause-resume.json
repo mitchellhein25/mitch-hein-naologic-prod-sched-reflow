@@ -1,0 +1,75 @@
+{
+  "name": "Basic pause and resume across shift boundary",
+  "description": "Work order pauses when shift ends and resumes in next shift",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-shift-001",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-SHIFT-001",
+              "manufacturingOrderId": "mo-shift-001",
+              "workCenterId": "wc-shift-001",
+              "startDate": "2024-01-15T16:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-shift-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 3,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 4,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 5,
+                  "startHour": 8,
+                  "endHour": 17
+                }
+              ],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-shift-001",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-SHIFT-001",
+              "itemId": "item-shift-001",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

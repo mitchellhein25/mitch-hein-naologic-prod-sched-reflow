@@ -1,0 +1,60 @@
+{
+  "name": "Shift logic with due date constraints",
+  "description": "Work orders that pause/resume must still meet due date constraints",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-shift-004",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-SHIFT-004",
+              "manufacturingOrderId": "mo-shift-004",
+              "workCenterId": "wc-shift-004",
+              "startDate": "2024-01-15T16:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-shift-004",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line with Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 8,
+                  "endHour": 17
+                }
+              ],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-shift-004",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-SHIFT-004",
+              "itemId": "item-shift-004",
+              "quantity": 50,
+              "dueDate": "2024-01-16T10:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

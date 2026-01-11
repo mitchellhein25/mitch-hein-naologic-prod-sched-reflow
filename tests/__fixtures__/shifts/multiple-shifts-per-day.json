@@ -1,0 +1,288 @@
+{
+  "name": "Multiple shifts per day",
+  "description": "Work orders with multiple shifts per day (e.g., day shift and night shift)",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-multi-shift-001",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MULTI-SHIFT-001",
+              "manufacturingOrderId": "mo-multi-shift-001",
+              "workCenterId": "wc-multi-shift-001",
+              "startDate": "2024-01-15T16:00:00Z",
+              "endDate": "2024-01-15T18:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-multi-shift-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "24/7 Work Center with Day and Night Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 22,
+                  "endHour": 6
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 22,
+                  "endHour": 6
+                },
+                {
+                  "dayOfWeek": 3,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 3,
+                  "startHour": 22,
+                  "endHour": 6
+                },
+                {
+                  "dayOfWeek": 4,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 4,
+                  "startHour": 22,
+                  "endHour": 6
+                },
+                {
+                  "dayOfWeek": 5,
+                  "startHour": 8,
+                  "endHour": 17
+                },
+                {
+                  "dayOfWeek": 5,
+                  "startHour": 22,
+                  "endHour": 6
+                }
+              ],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-multi-shift-001",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MULTI-SHIFT-001",
+              "itemId": "item-multi-shift-001",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-multi-shift-002",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MULTI-SHIFT-002",
+              "manufacturingOrderId": "mo-multi-shift-002",
+              "workCenterId": "wc-multi-shift-002",
+              "startDate": "2024-01-15T08:00:00Z",
+              "endDate": "2024-01-15T10:00:00Z",
+              "durationMinutes": 120,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-multi-shift-002",
+            "docType": "workCenter",
+            "data": {
+              "name": "Work Center with Morning and Afternoon Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 13,
+                  "endHour": 19
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 13,
+                  "endHour": 19
+                },
+                {
+                  "dayOfWeek": 3,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 3,
+                  "startHour": 13,
+                  "endHour": 19
+                },
+                {
+                  "dayOfWeek": 4,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 4,
+                  "startHour": 13,
+                  "endHour": 19
+                },
+                {
+                  "dayOfWeek": 5,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 5,
+                  "startHour": 13,
+                  "endHour": 19
+                }
+              ],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-multi-shift-002",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MULTI-SHIFT-002",
+              "itemId": "item-multi-shift-002",
+              "quantity": 50,
+              "dueDate": "2024-01-20T19:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-multi-shift-003",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-MULTI-SHIFT-003",
+              "manufacturingOrderId": "mo-multi-shift-003",
+              "workCenterId": "wc-multi-shift-003",
+              "startDate": "2024-01-15T10:00:00Z",
+              "endDate": "2024-01-15T16:00:00Z",
+              "durationMinutes": 300,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-multi-shift-003",
+            "docType": "workCenter",
+            "data": {
+              "name": "Work Center with Morning and Afternoon Shifts",
+              "shifts": [
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 1,
+                  "startHour": 13,
+                  "endHour": 19
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 2,
+                  "startHour": 13,
+                  "endHour": 19
+                },
+                {
+                  "dayOfWeek": 3,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 3,
+                  "startHour": 13,
+                  "endHour": 19
+                },
+                {
+                  "dayOfWeek": 4,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 4,
+                  "startHour": 13,
+                  "endHour": 19
+                },
+                {
+                  "dayOfWeek": 5,
+                  "startHour": 6,
+                  "endHour": 12
+                },
+                {
+                  "dayOfWeek": 5,
+                  "startHour": 13,
+                  "endHour": 19
+                }
+              ],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-multi-shift-003",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-MULTI-SHIFT-003",
+              "itemId": "item-multi-shift-003",
+              "quantity": 50,
+              "dueDate": "2024-01-20T19:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
