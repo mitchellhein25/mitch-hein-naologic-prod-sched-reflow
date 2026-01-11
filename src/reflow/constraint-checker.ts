@@ -157,6 +157,68 @@ export class ConstraintChecker {
     };
   }
 
+  validateDependenciesRespected(
+    workOrders: WorkOrderDocument[]
+  ): ValidationResult {
+    const errors: string[] = [];
+
+    // Build a map of work orders by docId for efficient lookup
+    const workOrdersMap = new Map<string, WorkOrderDocument>();
+    for (const workOrder of workOrders) {
+      workOrdersMap.set(workOrder.docId, workOrder);
+    }
+
+    // For each work order, validate its dependencies
+    for (const workOrder of workOrders) {
+      const dependsOnIds = workOrder.data.dependsOnWorkOrderIds || [];
+      
+      if (dependsOnIds.length === 0) {
+        continue; // No dependencies to check
+      }
+
+      const workOrderStartDate = parseDate(workOrder.data.startDate);
+      if (!workOrderStartDate) {
+        errors.push(
+          `Work order ${workOrder.docId} has invalid startDate for dependency validation`
+        );
+        continue;
+      }
+
+      // Check each dependency
+      for (const dependencyId of dependsOnIds) {
+        const dependencyWorkOrder = workOrdersMap.get(dependencyId);
+        
+        if (!dependencyWorkOrder) {
+          errors.push(
+            `Work order ${workOrder.docId} depends on non-existent work order ${dependencyId}`
+          );
+          continue;
+        }
+
+        const dependencyEndDate = parseDate(dependencyWorkOrder.data.endDate);
+        if (!dependencyEndDate) {
+          errors.push(
+            `Work order ${dependencyId} (dependency of ${workOrder.docId}) has invalid endDate for dependency validation`
+          );
+          continue;
+        }
+
+        // Dependency constraint: dependent work order must start AFTER dependency ends
+        // workOrder.startDate >= dependencyWorkOrder.endDate
+        if (isAfter(dependencyEndDate, workOrderStartDate)) {
+          errors.push(
+            `Work order ${workOrder.docId} starts before dependency ${dependencyId} ends (${workOrder.data.startDate} < ${dependencyWorkOrder.data.endDate})`
+          );
+        }
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+
   validateAllConstraints(
     workOrders: WorkOrderDocument[],
     workCenters: WorkCenterDocument[],
@@ -178,6 +240,9 @@ export class ConstraintChecker {
 
     const result4 = this.validateWorkCenterAvailability(workOrders, workCenters);
     allErrors.push(...result4.errors);
+
+    const result5 = this.validateDependenciesRespected(workOrders);
+    allErrors.push(...result5.errors);
 
     return {
       valid: allErrors.length === 0,

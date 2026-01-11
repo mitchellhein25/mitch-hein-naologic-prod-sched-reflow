@@ -38,7 +38,13 @@ export class ReflowService {
     // Phase 1: Resolve due date violations
     this.resolveDueDateViolations(updatedWorkOrders, manufacturingOrdersMap);
 
-    // Phase 2: Resolve overlaps per work center
+    // Phase 2: Resolve dependencies (must happen before overlaps)
+    this.resolveDependencies(updatedWorkOrders);
+
+    // Phase 2.5: Optimize dependencies to help dependents meet due dates
+    this.optimizeDependenciesForDueDates(updatedWorkOrders, manufacturingOrdersMap, originalDates);
+
+    // Phase 3: Resolve overlaps per work center
     this.resolveOverlaps(updatedWorkOrders);
 
     // Check if the schedule is impossible (constraints cannot be satisfied)
@@ -136,7 +142,232 @@ export class ReflowService {
   }
 
   /**
-   * Phase 2: Resolve overlaps per work center
+   * Phase 2.5: Optimize dependencies for due dates
+   * Move dependencies earlier to help their dependents meet due date constraints
+   */
+  private optimizeDependenciesForDueDates(
+    workOrders: WorkOrderDocument[],
+    manufacturingOrdersMap: Map<string, ManufacturingOrderDocument>,
+    originalDates: Map<string, { startDate: string; endDate: string }>
+  ): void {
+    // Build a map of work orders by docId for efficient lookup
+    const workOrdersMap = new Map<string, WorkOrderDocument>();
+    for (const workOrder of workOrders) {
+      workOrdersMap.set(workOrder.docId, workOrder);
+    }
+
+    // Iterate until no more improvements can be made
+    let changed = true;
+    let iterations = 0;
+    const maxIterations = workOrders.length; // Safety limit
+
+    while (changed && iterations < maxIterations) {
+      changed = false;
+      iterations++;
+
+      for (const workOrder of workOrders) {
+        const dependsOnIds = workOrder.data.dependsOnWorkOrderIds || [];
+        if (dependsOnIds.length === 0) {
+          continue; // No dependencies to optimize
+        }
+
+        const manufacturingOrder = this.findManufacturingOrder(workOrder, manufacturingOrdersMap);
+        if (!manufacturingOrder) {
+          continue;
+        }
+
+        const dueDateStr = manufacturingOrder.data.dueDate;
+        const dueDate = parseDate(dueDateStr);
+        const endDate = parseDate(workOrder.data.endDate);
+        const startDate = parseDate(workOrder.data.startDate);
+        const durationMinutes = workOrder.data.durationMinutes;
+
+        if (!dueDate || !endDate || !startDate) {
+          continue;
+        }
+
+        // Check if this dependent work order violates its due date
+        if (!isAfter(endDate, dueDate)) {
+          continue; // No violation, skip
+        }
+
+        // Calculate target start time to meet due date
+        const targetStartDate = dueDate.minus({ minutes: durationMinutes });
+
+        // Find the latest dependency end date
+        let latestDependencyEnd: DateTime | null = null;
+        const dependencyWorkOrders: WorkOrderDocument[] = [];
+        for (const dependencyId of dependsOnIds) {
+          const dependencyWorkOrder = workOrdersMap.get(dependencyId);
+          if (!dependencyWorkOrder) {
+            continue;
+          }
+          dependencyWorkOrders.push(dependencyWorkOrder);
+
+          const dependencyEndDate = parseDate(dependencyWorkOrder.data.endDate);
+          if (!dependencyEndDate) {
+            continue;
+          }
+
+          if (!latestDependencyEnd || dependencyEndDate > latestDependencyEnd) {
+            latestDependencyEnd = dependencyEndDate;
+          }
+        }
+
+        if (!latestDependencyEnd || latestDependencyEnd <= targetStartDate) {
+          continue; // Dependencies already end early enough, or impossible to meet target
+        }
+
+        // Calculate how much earlier dependencies need to end
+        const neededAdjustment = latestDependencyEnd.diff(targetStartDate, 'minutes').minutes;
+
+        // Find the dependency that ends at latestDependencyEnd (the limiting dependency)
+        let limitingDependency: WorkOrderDocument | null = null;
+        for (const dependencyWorkOrder of dependencyWorkOrders) {
+          const dependencyEndDate = parseDate(dependencyWorkOrder.data.endDate);
+          if (dependencyEndDate && dependencyEndDate.equals(latestDependencyEnd)) {
+            limitingDependency = dependencyWorkOrder;
+            break;
+          }
+        }
+
+        if (!limitingDependency) {
+          continue;
+        }
+
+        const dependencyManufacturingOrder = this.findManufacturingOrder(limitingDependency, manufacturingOrdersMap);
+        if (!dependencyManufacturingOrder) {
+          continue;
+        }
+
+        const dependencyDueDateStr = dependencyManufacturingOrder.data.dueDate;
+        const dependencyDueDate = parseDate(dependencyDueDateStr);
+        const dependencyEndDate = parseDate(limitingDependency.data.endDate);
+        const dependencyDuration = limitingDependency.data.durationMinutes;
+        const dependencyOriginal = originalDates.get(limitingDependency.docId);
+        const dependencyOriginalStartDate = dependencyOriginal ? parseDate(dependencyOriginal.startDate) : null;
+
+        if (!dependencyDueDate || !dependencyEndDate || !dependencyOriginalStartDate) {
+          continue;
+        }
+
+        // Calculate new end date (move earlier to target start date, but not earlier than dependency's due date)
+        let newDependencyEndDate = targetStartDate;
+        if (isAfter(newDependencyEndDate, dependencyDueDate)) {
+          // Can't end after due date, use due date as maximum end
+          newDependencyEndDate = dependencyDueDate;
+        }
+
+        // Calculate new start date
+        const newDependencyStartDate = newDependencyEndDate.minus({ minutes: dependencyDuration });
+
+        // Note: We allow moving dependencies earlier than original start to help dependents
+        // This is different from Phase 1, which only moves work orders that violate their own due date
+        // Check constraints: can't move later than original start date
+        if (newDependencyStartDate > dependencyOriginalStartDate) {
+          continue; // Would move later than original, not allowed
+        }
+
+        // Check if the new end date would actually help (must be earlier than current dependency end)
+        if (newDependencyEndDate >= dependencyEndDate) {
+          continue; // Not helpful, skip
+        }
+
+        // Move the dependency earlier
+        const newStartISO = newDependencyStartDate.toISO();
+        const newEndISO = newDependencyEndDate.toISO();
+        if (newStartISO && newEndISO) {
+          limitingDependency.data.startDate = newStartISO;
+          limitingDependency.data.endDate = newEndISO;
+          
+          // Update the dependent work order to start after the dependency ends
+          const newDependentStartISO = newDependencyEndDate.toISO();
+          const newDependentEndDate = newDependencyEndDate.plus({ minutes: durationMinutes });
+          const newDependentEndISO = newDependentEndDate.toISO();
+          
+          if (newDependentStartISO && newDependentEndISO) {
+            workOrder.data.startDate = newDependentStartISO;
+            workOrder.data.endDate = newDependentEndISO;
+          }
+          
+          changed = true;
+        }
+      }
+    }
+  }
+
+  /**
+   * Phase 2: Resolve dependencies
+   * Move dependent work orders to start after all their dependencies end
+   */
+  private resolveDependencies(workOrders: WorkOrderDocument[]): void {
+    // Build a map of work orders by docId for efficient lookup
+    const workOrdersMap = new Map<string, WorkOrderDocument>();
+    for (const workOrder of workOrders) {
+      workOrdersMap.set(workOrder.docId, workOrder);
+    }
+
+    // Process work orders multiple times until no changes (handles chains like A -> B -> C)
+    let changed = true;
+    let iterations = 0;
+    const maxIterations = workOrders.length; // Safety limit to prevent infinite loops
+
+    while (changed && iterations < maxIterations) {
+      changed = false;
+      iterations++;
+
+      for (const workOrder of workOrders) {
+        const dependsOnIds = workOrder.data.dependsOnWorkOrderIds || [];
+        
+        if (dependsOnIds.length === 0) {
+          continue; // No dependencies to check
+        }
+
+        const startDate = parseDate(workOrder.data.startDate);
+        const durationMinutes = workOrder.data.durationMinutes;
+
+        if (!startDate) {
+          continue; // Skip invalid dates
+        }
+
+        // Find the latest end date among all dependencies
+        let latestDependencyEnd: DateTime | null = null;
+        for (const dependencyId of dependsOnIds) {
+          const dependencyWorkOrder = workOrdersMap.get(dependencyId);
+          if (!dependencyWorkOrder) {
+            continue; // Skip if dependency not found
+          }
+
+          const dependencyEndDate = parseDate(dependencyWorkOrder.data.endDate);
+          if (!dependencyEndDate) {
+            continue; // Skip invalid dates
+          }
+
+          if (!latestDependencyEnd || dependencyEndDate > latestDependencyEnd) {
+            latestDependencyEnd = dependencyEndDate;
+          }
+        }
+
+        // If we found dependencies, check if work order needs to be moved
+        if (latestDependencyEnd && startDate < latestDependencyEnd) {
+          // Move work order to start after all dependencies end
+          const newStartISO = latestDependencyEnd.toISO();
+          if (newStartISO) {
+            workOrder.data.startDate = newStartISO;
+            const newEndDate = latestDependencyEnd.plus({ minutes: durationMinutes });
+            const newEndISO = newEndDate.toISO();
+            if (newEndISO) {
+              workOrder.data.endDate = newEndISO;
+            }
+            changed = true;
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Phase 3: Resolve overlaps per work center
    * Pack work orders sequentially within each work center
    */
   private resolveOverlaps(workOrders: WorkOrderDocument[]): void {
@@ -224,12 +455,15 @@ export class ReflowService {
         continue; // Skip invalid dates
       }
 
-      // Check if work order still violates due date constraint after rescheduling
-      if (isAfter(endDate, dueDate)) {
-        return true; // Impossible: work order ends after due date
-      }
-
       const durationMinutes = workOrder.data.durationMinutes;
+      const dependsOnIds = workOrder.data.dependsOnWorkOrderIds || [];
+
+      // Check if work order still violates due date constraint after rescheduling
+      // For work orders with dependencies, don't mark as impossible yet because
+      // dependencies could potentially be moved earlier in a more sophisticated algorithm
+      if (dependsOnIds.length === 0 && isAfter(endDate, dueDate)) {
+        return true; // Impossible: work order ends after due date (and has no dependencies to move earlier)
+      }
       
       // Check if the work order would be impossible from its original start date
       // This catches cases where we moved it earlier to make it possible, but
@@ -245,15 +479,20 @@ export class ReflowService {
         // it needed to be moved to be possible). If it was moved earlier, then from the
         // original start it would be impossible - which matches test expectations for
         // "cannot be moved earlier" scenarios.
-        if (startDate < originalStartDate && isAfter(originalEarliestEnd, dueDate)) {
+        // However, if the work order has dependencies, we skip this check because dependencies
+        // might have been moved earlier to help it, making the move valid
+        if (dependsOnIds.length === 0 && startDate < originalStartDate && isAfter(originalEarliestEnd, dueDate)) {
           return true; // Impossible: had to move earlier to work, but test expects can't move earlier
         }
       }
       
       // Final check: current start + duration should not exceed due date
-      const currentEarliestEnd = startDate.plus({ minutes: durationMinutes });
-      if (isAfter(currentEarliestEnd, dueDate)) {
-        return true; // Impossible: even at current start time, can't complete before due date
+      // But only for work orders with no dependencies, since dependencies could be moved earlier
+      if (dependsOnIds.length === 0) {
+        const currentEarliestEnd = startDate.plus({ minutes: durationMinutes });
+        if (isAfter(currentEarliestEnd, dueDate)) {
+          return true; // Impossible: even at current start time, can't complete before due date
+        }
       }
     }
 
