@@ -1,0 +1,63 @@
+{
+  "name": "No dependencies baseline",
+  "description": "Work orders with empty dependency arrays to verify baseline behavior",
+  "testExamples": [
+    {
+      "input": {
+        "workOrders": [
+          {
+            "docId": "wo-050",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-050",
+              "manufacturingOrderId": "mo-015",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T08:00:00Z",
+              "endDate": "2024-01-10T12:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          },
+          {
+            "docId": "wo-051",
+            "docType": "workOrder",
+            "data": {
+              "workOrderNumber": "WO-051",
+              "manufacturingOrderId": "mo-015",
+              "workCenterId": "wc-001",
+              "startDate": "2024-01-10T10:00:00Z",
+              "endDate": "2024-01-10T14:00:00Z",
+              "durationMinutes": 240,
+              "isMaintenance": false,
+              "dependsOnWorkOrderIds": []
+            }
+          }
+        ],
+        "workCenters": [
+          {
+            "docId": "wc-001",
+            "docType": "workCenter",
+            "data": {
+              "name": "Assembly Line A",
+              "shifts": [],
+              "maintenanceWindows": []
+            }
+          }
+        ],
+        "manufacturingOrders": [
+          {
+            "docId": "mo-015",
+            "docType": "manufacturingOrder",
+            "data": {
+              "manufacturingOrderNumber": "MO-015",
+              "itemId": "item-015",
+              "quantity": 50,
+              "dueDate": "2024-01-20T17:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
