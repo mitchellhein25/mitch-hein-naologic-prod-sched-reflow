@@ -526,7 +526,7 @@
             "docType": "workOrder",
             "data": {
               "workOrderNumber": "WO-013-001",
-              "manufacturingOrderId": "mo-001-001",
+              "manufacturingOrderId": "mo-013-001",
               "workCenterId": "wc-001",
               "startDate": "2024-04-03T08:00:00Z",
               "endDate": "2024-04-03T16:00:00Z",

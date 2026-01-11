@@ -4,6 +4,7 @@
   "description": "Production service planning reflow planner",
   "main": "dist/index.js",
   "scripts": {
+    "build": "tsc",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
