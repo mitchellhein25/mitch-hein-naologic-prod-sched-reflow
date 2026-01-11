@@ -4,7 +4,8 @@ import {
   WorkCenterDocument, 
   WorkOrderDocument,
   WorkOrderChange,
-  WorkCenterShift
+  WorkCenterShift,
+  MaintenanceWindow
 } from "./types";
 import { parseDate, isAfter } from "../utils/date-utils";
 import { DateTime } from "luxon";
@@ -298,16 +299,221 @@ export class ReflowService {
   }
 
   /**
-   * Phase 0: Normalize all end dates to account for shifts
-   * Recalculate end dates for all work orders based on their start dates and shifts
+   * Calculate the expected end date for a work order accounting for both shift pauses and maintenance windows
+   * Work orders pause for BOTH shift boundaries AND maintenance windows
+   * Priority: Check for maintenance windows first (absolute dates), then shifts
+   */
+  private calculateEndDateWithShiftsAndMaintenanceWindows(
+    startDate: DateTime,
+    durationMinutes: number,
+    shifts: WorkCenterShift[],
+    maintenanceWindows: MaintenanceWindow[]
+  ): DateTime | null {
+    // Parse and sort maintenance windows by start date
+    const parsedWindows: Array<{ start: DateTime; end: DateTime }> = [];
+    for (const window of maintenanceWindows) {
+      const windowStart = parseDate(window.startDate);
+      const windowEnd = parseDate(window.endDate);
+      if (windowStart && windowEnd && windowStart < windowEnd) {
+        parsedWindows.push({ start: windowStart, end: windowEnd });
+      }
+    }
+    parsedWindows.sort((a, b) => a.start.toMillis() - b.start.toMillis());
+
+    // If no shifts and no maintenance windows, work happens continuously
+    if (shifts.length === 0 && parsedWindows.length === 0) {
+      return startDate.plus({ minutes: durationMinutes });
+    }
+
+    let currentTime = startDate;
+    let remainingWorkMinutes = durationMinutes;
+    const maxIterations = 1000;
+    let iterations = 0;
+
+    while (remainingWorkMinutes > 0 && iterations < maxIterations) {
+      iterations++;
+
+      // First, check if current time is within a maintenance window
+      let activeMaintenanceWindow: { start: DateTime; end: DateTime } | null = null;
+      for (const window of parsedWindows) {
+        if (currentTime >= window.start && currentTime < window.end) {
+          activeMaintenanceWindow = window;
+          break;
+        }
+      }
+
+      // If we're in a maintenance window, skip to the end of it
+      if (activeMaintenanceWindow) {
+        currentTime = activeMaintenanceWindow.end;
+        continue;
+      }
+
+      // If no shifts, check for next maintenance window
+      if (shifts.length === 0) {
+        const nextMaintenanceWindow = parsedWindows.find(w => w.start > currentTime);
+        if (nextMaintenanceWindow) {
+          const timeUntilMaintenance = nextMaintenanceWindow.start.diff(currentTime, 'minutes').minutes;
+          if (timeUntilMaintenance > 0) {
+            const workDoneBeforeMaintenance = Math.min(remainingWorkMinutes, timeUntilMaintenance);
+            remainingWorkMinutes -= workDoneBeforeMaintenance;
+            currentTime = currentTime.plus({ minutes: workDoneBeforeMaintenance });
+            if (remainingWorkMinutes <= 0) {
+              break;
+            }
+          }
+          currentTime = nextMaintenanceWindow.end;
+        } else {
+          // No more maintenance windows, finish remaining work
+          currentTime = currentTime.plus({ minutes: remainingWorkMinutes });
+          remainingWorkMinutes = 0;
+        }
+        continue;
+      }
+
+      // Handle shifts (with potential maintenance windows)
+      const currentDayOfWeek = currentTime.weekday;
+      const shiftsForDay = shifts.filter(s => s.dayOfWeek === currentDayOfWeek);
+
+      if (shiftsForDay.length === 0) {
+        // No shifts for this day, check if we can move to next day or hit maintenance window
+        const nextDay = currentTime.plus({ days: 1 }).startOf('day');
+        const nextMaintenanceWindow = parsedWindows.find(w => w.start > currentTime && w.start < nextDay);
+        if (nextMaintenanceWindow) {
+          currentTime = nextMaintenanceWindow.end;
+        } else {
+          currentTime = nextDay;
+        }
+        continue;
+      }
+
+      // Find active shift
+      let activeShift: WorkCenterShift | null = null;
+      const currentDayStart = currentTime.startOf('day');
+
+      for (const shift of shiftsForDay) {
+        const shiftStartTime = currentDayStart.plus({ hours: shift.startHour });
+        let shiftEndTime: DateTime;
+        let isSpanningMidnight = false;
+
+        if (shift.endHour < shift.startHour) {
+          shiftEndTime = currentDayStart.plus({ days: 1 }).plus({ hours: shift.endHour });
+          isSpanningMidnight = true;
+        } else {
+          shiftEndTime = currentDayStart.plus({ hours: shift.endHour });
+        }
+
+        if (isSpanningMidnight) {
+          if (currentTime >= shiftStartTime || currentTime < shiftEndTime) {
+            activeShift = shift;
+            break;
+          }
+        } else {
+          if (currentTime >= shiftStartTime && currentTime < shiftEndTime) {
+            activeShift = shift;
+            break;
+          }
+        }
+      }
+
+      if (!activeShift) {
+        // No active shift, find next available shift
+        const nextShiftStartTime = this.findNextAvailableShift(
+          shiftsForDay,
+          currentTime,
+          currentDayStart,
+          shifts
+        );
+
+        if (!nextShiftStartTime) {
+          return null;
+        }
+
+        // Check if there's a maintenance window before the next shift
+        const nextMaintenanceWindow = parsedWindows.find(w => w.start > currentTime && w.start < nextShiftStartTime);
+        if (nextMaintenanceWindow) {
+          currentTime = nextMaintenanceWindow.end;
+        } else {
+          currentTime = nextShiftStartTime;
+        }
+        continue;
+      }
+
+      // Calculate shift end time
+      const shiftStartTime = currentDayStart.plus({ hours: activeShift.startHour });
+      let shiftEndTime: DateTime;
+      if (activeShift.endHour < activeShift.startHour) {
+        shiftEndTime = currentDayStart.plus({ days: 1 }).plus({ hours: activeShift.endHour });
+      } else {
+        shiftEndTime = currentDayStart.plus({ hours: activeShift.endHour });
+      }
+
+      // Find the next maintenance window that might interrupt this shift
+      const nextMaintenanceWindow = parsedWindows.find(w => w.start > currentTime && w.start < shiftEndTime);
+
+      // Calculate available time until shift end or maintenance window, whichever comes first
+      const effectiveEndTime = nextMaintenanceWindow ? nextMaintenanceWindow.start : shiftEndTime;
+      const timeUntilEffectiveEnd = effectiveEndTime.diff(currentTime, 'minutes').minutes;
+      const workDoneThisPeriod = Math.min(remainingWorkMinutes, timeUntilEffectiveEnd);
+
+      remainingWorkMinutes -= workDoneThisPeriod;
+      currentTime = currentTime.plus({ minutes: workDoneThisPeriod });
+
+      if (remainingWorkMinutes <= 0) {
+        break;
+      }
+
+      // If we hit a maintenance window, skip to its end
+      if (nextMaintenanceWindow && currentTime >= nextMaintenanceWindow.start) {
+        currentTime = nextMaintenanceWindow.end;
+        continue;
+      }
+
+      // Otherwise, move to next shift
+      const nextShiftStartTime = this.findNextAvailableShift(
+        shiftsForDay,
+        currentTime,
+        currentDayStart,
+        shifts,
+        activeShift
+      );
+
+      if (!nextShiftStartTime) {
+        return null;
+      }
+
+      // Check if there's a maintenance window before the next shift
+      const maintenanceBeforeNextShift = parsedWindows.find(w => w.start > currentTime && w.start < nextShiftStartTime);
+      if (maintenanceBeforeNextShift) {
+        currentTime = maintenanceBeforeNextShift.end;
+      } else {
+        currentTime = nextShiftStartTime;
+      }
+    }
+
+    if (iterations >= maxIterations) {
+      return null;
+    }
+
+    return currentTime;
+  }
+
+  /**
+   * Phase 0: Normalize all end dates to account for shifts and maintenance windows
+   * Recalculate end dates for all work orders based on their start dates, shifts, and maintenance windows
    */
   private normalizeEndDatesForShifts(
     workOrders: WorkOrderDocument[],
     workCentersMap: Map<string, WorkCenterDocument>
   ): void {
     for (const workOrder of workOrders) {
+      // Skip maintenance work orders - they remain unchanged
+      if (workOrder.data.isMaintenance) {
+        continue;
+      }
+
       const workCenter = this.findWorkCenter(workOrder, workCentersMap);
       const shifts = workCenter?.data.shifts || [];
+      const maintenanceWindows = workCenter?.data.maintenanceWindows || [];
       
       const startDate = parseDate(workOrder.data.startDate);
       if (!startDate) {
@@ -315,7 +521,12 @@ export class ReflowService {
       }
 
       const durationMinutes = workOrder.data.durationMinutes;
-      const calculatedEndDate = this.calculateEndDateWithShifts(startDate, durationMinutes, shifts);
+      const calculatedEndDate = this.calculateEndDateWithShiftsAndMaintenanceWindows(
+        startDate,
+        durationMinutes,
+        shifts,
+        maintenanceWindows
+      );
       if (calculatedEndDate) {
         const newEndISO = calculatedEndDate.toISO();
         if (newEndISO) {
@@ -335,6 +546,11 @@ export class ReflowService {
     workCentersMap: Map<string, WorkCenterDocument>
   ): void {
     for (const workOrder of workOrders) {
+      // Skip maintenance work orders - they are not moved
+      if (workOrder.data.isMaintenance) {
+        continue;
+      }
+
       const manufacturingOrder = this.findManufacturingOrder(workOrder, manufacturingOrdersMap);
       if (!manufacturingOrder) {
         continue; // Skip if manufacturing order not found
@@ -342,6 +558,7 @@ export class ReflowService {
 
       const workCenter = this.findWorkCenter(workOrder, workCentersMap);
       const shifts = workCenter?.data.shifts || [];
+      const maintenanceWindows = workCenter?.data.maintenanceWindows || [];
 
       const dueDateStr = manufacturingOrder.data.dueDate;
       const dueDate = parseDate(dueDateStr);
@@ -356,7 +573,7 @@ export class ReflowService {
       if (isAfter(endDate, dueDate)) {
         // Calculate new end date (at or before due date)
         const maxEndDate = dueDate;
-        
+
         // Calculate new start date based on duration (simple calculation for reverse)
         const durationMinutes = workOrder.data.durationMinutes;
         const newStartDate = maxEndDate.minus({ minutes: durationMinutes });
@@ -364,8 +581,13 @@ export class ReflowService {
         // Only move earlier if the new start is before or equal to original start
         // Never move later than original start date
         if (newStartDate <= originalStartDate) {
-          // Recalculate end date accounting for shifts
-          const calculatedEndDate = this.calculateEndDateWithShifts(newStartDate, durationMinutes, shifts);
+          // Recalculate end date accounting for shifts and maintenance windows
+          const calculatedEndDate = this.calculateEndDateWithShiftsAndMaintenanceWindows(
+            newStartDate,
+            durationMinutes,
+            shifts,
+            maintenanceWindows
+          );
           if (calculatedEndDate) {
             const newStartISO = newStartDate.toISO();
             const newEndISO = calculatedEndDate.toISO();
@@ -377,7 +599,12 @@ export class ReflowService {
         } else {
           // If we can't move earlier enough, keep original start and adjust end
           // This ensures the duration is preserved, but may still violate due date (detected in checkImpossibility)
-          const calculatedEndDate = this.calculateEndDateWithShifts(originalStartDate, durationMinutes, shifts);
+          const calculatedEndDate = this.calculateEndDateWithShiftsAndMaintenanceWindows(
+            originalStartDate,
+            durationMinutes,
+            shifts,
+            maintenanceWindows
+          );
           if (calculatedEndDate) {
             const newEndISO = calculatedEndDate.toISO();
             if (newEndISO) {
@@ -415,6 +642,11 @@ export class ReflowService {
       iterations++;
 
       for (const workOrder of workOrders) {
+        // Skip maintenance work orders when optimizing dependencies
+        if (workOrder.data.isMaintenance) {
+          continue;
+        }
+
         const dependsOnIds = workOrder.data.dependsOnWorkOrderIds || [];
         if (dependsOnIds.length === 0) {
           continue; // No dependencies to optimize
@@ -443,7 +675,7 @@ export class ReflowService {
         // Calculate target start time to meet due date
         const targetStartDate = dueDate.minus({ minutes: durationMinutes });
 
-        // Find the latest dependency end date
+        // Find the latest dependency end date (skip maintenance dependencies)
         let latestDependencyEnd: DateTime | null = null;
         const dependencyWorkOrders: WorkOrderDocument[] = [];
         for (const dependencyId of dependsOnIds) {
@@ -451,6 +683,19 @@ export class ReflowService {
           if (!dependencyWorkOrder) {
             continue;
           }
+
+          // Skip maintenance dependencies - they cannot be moved
+          if (dependencyWorkOrder.data.isMaintenance) {
+            const dependencyEndDate = parseDate(dependencyWorkOrder.data.endDate);
+            if (dependencyEndDate) {
+              dependencyWorkOrders.push(dependencyWorkOrder);
+              if (!latestDependencyEnd || dependencyEndDate > latestDependencyEnd) {
+                latestDependencyEnd = dependencyEndDate;
+              }
+            }
+            continue;
+          }
+
           dependencyWorkOrders.push(dependencyWorkOrder);
 
           const dependencyEndDate = parseDate(dependencyWorkOrder.data.endDate);
@@ -471,8 +716,12 @@ export class ReflowService {
         const neededAdjustment = latestDependencyEnd.diff(targetStartDate, 'minutes').minutes;
 
         // Find the dependency that ends at latestDependencyEnd (the limiting dependency)
+        // Skip maintenance dependencies as they cannot be moved
         let limitingDependency: WorkOrderDocument | null = null;
         for (const dependencyWorkOrder of dependencyWorkOrders) {
+          if (dependencyWorkOrder.data.isMaintenance) {
+            continue; // Skip maintenance dependencies
+          }
           const dependencyEndDate = parseDate(dependencyWorkOrder.data.endDate);
           if (dependencyEndDate && dependencyEndDate.equals(latestDependencyEnd)) {
             limitingDependency = dependencyWorkOrder;
@@ -481,7 +730,7 @@ export class ReflowService {
         }
 
         if (!limitingDependency) {
-          continue;
+          continue; // Limiting dependency is a maintenance work order, cannot be moved
         }
 
         const dependencyManufacturingOrder = this.findManufacturingOrder(limitingDependency, manufacturingOrdersMap);
@@ -525,18 +774,31 @@ export class ReflowService {
         // Move the dependency earlier
         const dependencyWorkCenter = this.findWorkCenter(limitingDependency, workCentersMap);
         const dependencyShifts = dependencyWorkCenter?.data.shifts || [];
+        const dependencyMaintenanceWindows = dependencyWorkCenter?.data.maintenanceWindows || [];
         const newStartISO = newDependencyStartDate.toISO();
-        const calculatedEndDate = this.calculateEndDateWithShifts(newDependencyStartDate, dependencyDuration, dependencyShifts);
+        const calculatedEndDate = this.calculateEndDateWithShiftsAndMaintenanceWindows(
+          newDependencyStartDate,
+          dependencyDuration,
+          dependencyShifts,
+          dependencyMaintenanceWindows
+        );
         const newEndISO = calculatedEndDate?.toISO();
         if (newStartISO && newEndISO) {
           limitingDependency.data.startDate = newStartISO;
           limitingDependency.data.endDate = newEndISO;
           
           // Update the dependent work order to start after the dependency ends
+          // Use the dependency's actual recalculated end (calculatedEndDate) instead of newDependencyEndDate
           const workCenter = this.findWorkCenter(workOrder, workCentersMap);
           const shifts = workCenter?.data.shifts || [];
-          const newDependentStartISO = newDependencyEndDate.toISO();
-          const newDependentEndDate = this.calculateEndDateWithShifts(newDependencyEndDate, durationMinutes, shifts);
+          const maintenanceWindows = workCenter?.data.maintenanceWindows || [];
+          const newDependentStartISO = calculatedEndDate?.toISO();
+          const newDependentEndDate = this.calculateEndDateWithShiftsAndMaintenanceWindows(
+            calculatedEndDate!,
+            durationMinutes,
+            shifts,
+            maintenanceWindows
+          );
           const newDependentEndISO = newDependentEndDate?.toISO();
           
           if (newDependentStartISO && newDependentEndISO) {
@@ -574,8 +836,13 @@ export class ReflowService {
       iterations++;
 
       for (const workOrder of workOrders) {
+        // Skip maintenance work orders - they are not moved
+        if (workOrder.data.isMaintenance) {
+          continue;
+        }
+
         const dependsOnIds = workOrder.data.dependsOnWorkOrderIds || [];
-        
+
         if (dependsOnIds.length === 0) {
           continue; // No dependencies to check
         }
@@ -610,10 +877,16 @@ export class ReflowService {
           // Move work order to start after all dependencies end
           const workCenter = this.findWorkCenter(workOrder, workCentersMap);
           const shifts = workCenter?.data.shifts || [];
+          const maintenanceWindows = workCenter?.data.maintenanceWindows || [];
           const newStartISO = latestDependencyEnd.toISO();
           if (newStartISO) {
             workOrder.data.startDate = newStartISO;
-            const newEndDate = this.calculateEndDateWithShifts(latestDependencyEnd, durationMinutes, shifts);
+            const newEndDate = this.calculateEndDateWithShiftsAndMaintenanceWindows(
+              latestDependencyEnd,
+              durationMinutes,
+              shifts,
+              maintenanceWindows
+            );
             if (newEndDate) {
               const newEndISO = newEndDate.toISO();
               if (newEndISO) {
@@ -656,6 +929,7 @@ export class ReflowService {
       });
 
       // Pack sequentially: next work order starts when previous ends
+      // Maintenance work orders are fixed blockers - regular work orders must work around them
       let currentEnd: DateTime | null = null;
       for (const workOrder of centerWorkOrders) {
         const startDate = parseDate(workOrder.data.startDate);
@@ -666,8 +940,16 @@ export class ReflowService {
           continue; // Skip invalid dates
         }
 
+        // Maintenance work orders are fixed - they cannot be moved
+        if (workOrder.data.isMaintenance) {
+          // Update currentEnd to be after this maintenance work order
+          // Regular work orders will start after this
+          currentEnd = endDate;
+          continue;
+        }
+
         if (currentEnd === null) {
-          // First work order - keep its times, update currentEnd for next iteration
+          // First regular work order - keep its times, update currentEnd for next iteration
           currentEnd = endDate;
         } else {
           // Check for overlap
@@ -675,11 +957,17 @@ export class ReflowService {
             // Overlap detected - move this work order to start after previous ends
             const workCenter = this.findWorkCenter(workOrder, workCentersMap);
             const shifts = workCenter?.data.shifts || [];
+            const maintenanceWindows = workCenter?.data.maintenanceWindows || [];
             const newStartISO = currentEnd.toISO();
             if (newStartISO) {
               workOrder.data.startDate = newStartISO;
             }
-            const calculatedEndDate = this.calculateEndDateWithShifts(currentEnd, durationMinutes, shifts);
+            const calculatedEndDate = this.calculateEndDateWithShiftsAndMaintenanceWindows(
+              currentEnd,
+              durationMinutes,
+              shifts,
+              maintenanceWindows
+            );
             if (calculatedEndDate) {
               currentEnd = calculatedEndDate;
               const endISO = calculatedEndDate.toISO();
@@ -708,6 +996,11 @@ export class ReflowService {
     originalDates: Map<string, { startDate: string; endDate: string }>
   ): boolean {
     for (const workOrder of workOrders) {
+      // Skip maintenance work orders - they are fixed and don't participate in feasibility analysis
+      if (workOrder.data.isMaintenance) {
+        continue;
+      }
+
       const manufacturingOrder = this.findManufacturingOrder(workOrder, manufacturingOrdersMap);
       if (!manufacturingOrder) {
         continue; // Skip if manufacturing order not found
