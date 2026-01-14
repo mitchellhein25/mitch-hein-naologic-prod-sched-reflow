@@ -19,6 +19,11 @@ export interface ValidationResult {
 }
 
 export class ConstraintChecker {
+  /**
+   * @upgrade
+   * - Add early exit if no work orders provided
+   * - Consider returning structured errors with work order IDs and error types for better programmatic handling
+   */
   validateAllWorkOrdersHaveValidDates(
     workOrders: WorkOrderDocument[]
   ): ValidationResult {
@@ -49,6 +54,12 @@ export class ConstraintChecker {
     };
   }
 
+  /**
+   * @upgrade
+   * - Add validation that manufacturing orders exist for all work orders (currently skipped)
+   * - Consider parallel processing for independent work orders
+   * - Consider caching manufacturing order lookups if called multiple times
+   */
   validateAllWorkOrdersCompleteBeforeDueDate(
     workOrders: WorkOrderDocument[],
     manufacturingOrders: ManufacturingOrderDocument[]
@@ -65,12 +76,21 @@ export class ConstraintChecker {
         continue;
       }
 
+      const startDate = parseDate(workOrder.data.startDate);
       const endDate = parseDate(workOrder.data.endDate);
       const dueDateObj = parseDate(dueDate);
 
-      if (!endDate || !dueDateObj) {
+      if (!startDate || !endDate || !dueDateObj) {
         errors.push(
           `Work order ${workOrder.docId} has invalid date format for due date validation`
+        );
+        continue;
+      }
+
+      // Check if due date is before start date (fundamentally impossible - can't start in past)
+      if (dueDateObj < startDate) {
+        errors.push(
+          `Work order ${workOrder.docId} has due date (${dueDate}) before start date (${workOrder.data.startDate})`
         );
         continue;
       }
@@ -88,6 +108,17 @@ export class ConstraintChecker {
     };
   }
 
+  /**
+   * @explanation
+   * Validates that work orders on the same work center don't overlap in time. This is a resource
+   * constraint - a work center can only handle one work order at a time. The method groups work
+   * orders by work center, then uses a nested loop to check all pairs for overlaps.
+   * 
+   * @upgrade
+   * - Replace O(n²) nested loop with interval tree or sweep line algorithm for O(n log n) performance
+   * - Consider sorting by start date first to enable early exit optimizations
+   * - Consider returning overlap details (which work orders, overlap duration) for better diagnostics
+   */
   validateNoWorkOrderOverlaps(
     workOrders: WorkOrderDocument[]
   ): ValidationResult {
@@ -136,6 +167,10 @@ export class ConstraintChecker {
     };
   }
 
+  /**
+   * @explanation
+   * Validates that all work orders reference existing work centers.
+   */
   validateWorkCenterAvailability(
     workOrders: WorkOrderDocument[],
     workCenters: WorkCenterDocument[]
@@ -160,6 +195,18 @@ export class ConstraintChecker {
     };
   }
 
+  /**
+   * @explanation
+   * Validates that dependency constraints are respected - dependent work orders must start after
+   * all their dependencies complete. This is a critical constraint for manufacturing workflows
+   * where operations must happen in sequence. The method builds a work order lookup map, then
+   * for each work order checks that its start date is after all dependency end dates. Also validates
+   * that referenced dependencies actually exist (data integrity check).
+   * 
+   * @upgrade
+   * - Add cycle detection to identify circular dependencies (A -> B -> A)
+   * - Consider using topological sort to validate dependencies more efficiently
+   */
   validateDependenciesRespected(
     workOrders: WorkOrderDocument[]
   ): ValidationResult {
@@ -223,12 +270,221 @@ export class ConstraintChecker {
   }
 
   /**
-   * Find the next shift on the same day that starts after the current time
-   * @param shiftsForDay - All shifts for the current day
-   * @param currentTime - Current time
-   * @param currentDayStart - Start of the current day
-   * @param excludeShift - Optional shift to exclude from the search
-   * @returns The start time of the next shift, or null if none found
+   * @explanation
+   * Validates that regular work orders (non-maintenance) correctly account for maintenance windows
+   * in their end dates. This is done by recalculating the expected end date using only maintenance
+   * windows (no shifts), then comparing it to the actual end date. Maintenance work orders are
+   * skipped as they're fixed. The method only validates when shifts are not present (to avoid
+   * duplicate validation with validateWorkOrdersRespectShifts which handles both). Uses a 1-minute
+   * tolerance for rounding differences.
+   * 
+   * @upgrade
+   * - Consider combining with validateWorkOrdersRespectShifts to avoid duplicate logic
+   */
+  validateWorkOrdersRespectMaintenanceWindows(
+    workOrders: WorkOrderDocument[],
+    workCenters: WorkCenterDocument[]
+  ): ValidationResult {
+    const errors: string[] = [];
+
+    const workCentersMap = new Map(
+      workCenters.map(wc => [wc.docId, wc])
+    );
+
+    for (const workOrder of workOrders) {
+      // Maintenance work orders (isMaintenance: true) are fixed and not affected by maintenance windows
+      if (workOrder.data.isMaintenance) {
+        continue;
+      }
+
+      const workCenter = workCentersMap.get(workOrder.data.workCenterId);
+      if (!workCenter) {
+        continue; // Already handled by validateWorkCenterAvailability
+      }
+
+      const shifts = workCenter.data.shifts || [];
+      const maintenanceWindows = workCenter.data.maintenanceWindows || [];
+      
+      // If shifts also exist, skip maintenance window validation (already handled by shift validation)
+      if (shifts.length > 0) {
+        continue;
+      }
+      
+      if (maintenanceWindows.length === 0) {
+        continue; // No maintenance windows defined, no validation needed
+      }
+
+      const startDate = parseDate(workOrder.data.startDate);
+      const endDate = parseDate(workOrder.data.endDate);
+      const durationMinutes = workOrder.data.durationMinutes;
+
+      if (!startDate || !endDate) {
+        errors.push(
+          `Work order ${workOrder.docId} has invalid dates for maintenance window validation`
+        );
+        continue;
+      }
+
+      // Calculate what the end date should be accounting for maintenance windows only
+      const expectedEndDate = this.calculateEndDateWithMaintenanceWindows(
+        startDate,
+        durationMinutes,
+        maintenanceWindows
+      );
+
+      // Verify the end date matches expected end date (within 1 minute tolerance for rounding)
+      const timeDifference = Math.abs(endDate.diff(expectedEndDate, 'minutes').minutes);
+      if (timeDifference > 1) {
+        const expectedEndISO = expectedEndDate.toISO();
+        errors.push(
+          `Work order ${workOrder.docId} end date ${workOrder.data.endDate} does not match expected end date accounting for maintenance windows${expectedEndISO ? ` (expected: ${expectedEndISO})` : ''}`
+        );
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * @explanation
+   * Validates that work orders correctly account for shifts and/or maintenance windows in their
+   * end dates. This is the most comprehensive shift/maintenance validation, handling three cases:
+   * shifts only, maintenance windows only, or both combined. The method recalculates expected end
+   * dates using the appropriate calculation method, then compares to actual end dates with a 1-minute
+   * tolerance. Maintenance work orders are skipped as they're fixed. This ensures that work orders
+   * pause and resume correctly according to work center constraints.
+   * 
+   * @upgrade
+   * - Consider parallel processing for independent work orders
+   * - Consider returning detailed diagnostics (which constraints were violated, by how much)
+   */
+  validateWorkOrdersRespectShifts(
+    workOrders: WorkOrderDocument[],
+    workCenters: WorkCenterDocument[]
+  ): ValidationResult {
+    const errors: string[] = [];
+
+    const workCentersMap = new Map(
+      workCenters.map(wc => [wc.docId, wc])
+    );
+
+    for (const workOrder of workOrders) {
+      // Skip maintenance work orders - they are fixed and not validated against shifts/maintenance windows
+      if (workOrder.data.isMaintenance) {
+        continue;
+      }
+
+      const workCenter = workCentersMap.get(workOrder.data.workCenterId);
+      if (!workCenter) {
+        continue; // Already handled by validateWorkCenterAvailability
+      }
+
+      const shifts = workCenter.data.shifts || [];
+      const maintenanceWindows = workCenter.data.maintenanceWindows || [];
+      
+      if (shifts.length === 0 && maintenanceWindows.length === 0) {
+        continue; // No shifts or maintenance windows defined, no validation needed
+      }
+
+      const startDate = parseDate(workOrder.data.startDate);
+      const endDate = parseDate(workOrder.data.endDate);
+      const durationMinutes = workOrder.data.durationMinutes;
+
+      if (!startDate || !endDate) {
+        errors.push(
+          `Work order ${workOrder.docId} has invalid dates for shift validation`
+        );
+        continue;
+      }
+
+      // If both shifts and maintenance windows exist, use combined calculation
+      // Otherwise use the appropriate single calculation
+      let expectedEndDate: DateTime | null;
+      if (shifts.length > 0 && maintenanceWindows.length > 0) {
+        expectedEndDate = this.calculateEndDateWithShiftsAndMaintenanceWindows(
+          startDate,
+          durationMinutes,
+          shifts,
+          maintenanceWindows
+        );
+      } else if (shifts.length > 0) {
+        expectedEndDate = this.calculateEndDateWithShifts(startDate, durationMinutes, shifts);
+      } else {
+        // Only maintenance windows
+        expectedEndDate = this.calculateEndDateWithMaintenanceWindows(startDate, durationMinutes, maintenanceWindows);
+      }
+
+      if (!expectedEndDate) {
+        errors.push(
+          `Work order ${workOrder.docId} could not be scheduled within available shifts/maintenance windows (duration: ${durationMinutes} minutes)`
+        );
+        continue;
+      }
+
+      // Verify the end date matches expected end date (within 1 minute tolerance for rounding)
+      const timeDifference = Math.abs(endDate.diff(expectedEndDate, 'minutes').minutes);
+      if (timeDifference > 1) {
+        const expectedEndISO = expectedEndDate.toISO();
+        errors.push(
+          `Work order ${workOrder.docId} end date ${workOrder.data.endDate} does not match expected end date accounting for shifts${expectedEndISO ? ` (expected: ${expectedEndISO})` : ''}`
+        );
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * @explanation
+   * Master validation method that runs all constraint validations and aggregates results. This
+   * provides a single entry point for comprehensive validation, running checks in a logical order.
+   */
+  validateAllConstraints(
+    workOrders: WorkOrderDocument[],
+    workCenters: WorkCenterDocument[],
+    manufacturingOrders: ManufacturingOrderDocument[]
+  ): ValidationResult {
+    const allErrors: string[] = [];
+
+    const result1 = this.validateAllWorkOrdersHaveValidDates(workOrders);
+    allErrors.push(...result1.errors);
+
+    const result2 = this.validateAllWorkOrdersCompleteBeforeDueDate(
+      workOrders,
+      manufacturingOrders
+    );
+    allErrors.push(...result2.errors);
+
+    const result3 = this.validateNoWorkOrderOverlaps(workOrders);
+    allErrors.push(...result3.errors);
+
+    const result4 = this.validateWorkCenterAvailability(workOrders, workCenters);
+    allErrors.push(...result4.errors);
+
+    const result5 = this.validateDependenciesRespected(workOrders);
+    allErrors.push(...result5.errors);
+
+    const result6 = this.validateWorkOrdersRespectShifts(workOrders, workCenters);
+    allErrors.push(...result6.errors);
+
+    const result7 = this.validateWorkOrdersRespectMaintenanceWindows(workOrders, workCenters);
+    allErrors.push(...result7.errors);
+
+    return {
+      valid: allErrors.length === 0,
+      errors: allErrors
+    };
+  }
+
+  /**
+   * @upgrade
+   * - Consider extracting to a shared utility to avoid code duplication with ReflowService
    */
   private findNextShiftOnSameDay(
     shiftsForDay: WorkCenterShift[],
@@ -253,10 +509,8 @@ export class ConstraintChecker {
   }
 
   /**
-   * Move to the next day and find the earliest shift for that day
-   * @param currentTime - Current time
-   * @param shifts - All shifts
-   * @returns The start time of the earliest shift on the next available day, or null if none found
+   * @upgrade
+   * - Consider extracting to a shared utility to avoid code duplication
    */
   private moveToNextDayWithShift(
     currentTime: DateTime,
@@ -283,13 +537,8 @@ export class ConstraintChecker {
   }
 
   /**
-   * Find the next available shift, checking same day first, then moving to next day
-   * @param shiftsForDay - All shifts for the current day
-   * @param currentTime - Current time
-   * @param currentDayStart - Start of the current day
-   * @param shifts - All shifts (for next day lookup)
-   * @param excludeShift - Optional shift to exclude from the search
-   * @returns The start time of the next available shift, or null if none found
+   * @upgrade
+   * - Consider extracting to a shared utility to avoid code duplication
    */
   private findNextAvailableShift(
     shiftsForDay: WorkCenterShift[],
@@ -315,9 +564,8 @@ export class ConstraintChecker {
   }
 
   /**
-   * Calculate the expected end date for a work order accounting for shift pauses
-   * Work orders pause outside shift hours and resume in the next shift
-   * Supports multiple shifts per day
+   * @upgrade
+   * - Consider extracting to a shared utility to avoid code duplication with ReflowService
    */
   private calculateEndDateWithShifts(
     startDate: DateTime,
@@ -448,10 +696,9 @@ export class ConstraintChecker {
   }
 
   /**
-   * Calculate the expected end date for a work order accounting for maintenance window pauses
-   * Regular work orders (isMaintenance: false) pause during maintenance windows and resume after
-   * Maintenance work orders (isMaintenance: true) are not affected by maintenance windows
-   */
+   * @upgrade
+   * - Consider extracting to a shared utility to avoid code duplication with ReflowServiceders with same maintenance windows
+    */
   private calculateEndDateWithMaintenanceWindows(
     startDate: DateTime,
     durationMinutes: number,
@@ -544,9 +791,8 @@ export class ConstraintChecker {
   }
 
   /**
-   * Calculate the expected end date for a work order accounting for both shift pauses and maintenance windows
-   * Work orders pause for BOTH shift boundaries AND maintenance windows
-   * Priority: Check for maintenance windows first (absolute dates), then shifts
+   * @upgrade
+   * - Consider extracting to a shared utility to avoid code duplication with ReflowService
    */
   private calculateEndDateWithShiftsAndMaintenanceWindows(
     startDate: DateTime,
@@ -740,188 +986,5 @@ export class ConstraintChecker {
     }
 
     return currentTime;
-  }
-
-  validateWorkOrdersRespectMaintenanceWindows(
-    workOrders: WorkOrderDocument[],
-    workCenters: WorkCenterDocument[]
-  ): ValidationResult {
-    const errors: string[] = [];
-
-    const workCentersMap = new Map(
-      workCenters.map(wc => [wc.docId, wc])
-    );
-
-    for (const workOrder of workOrders) {
-      // Maintenance work orders (isMaintenance: true) are fixed and not affected by maintenance windows
-      if (workOrder.data.isMaintenance) {
-        continue;
-      }
-
-      const workCenter = workCentersMap.get(workOrder.data.workCenterId);
-      if (!workCenter) {
-        continue; // Already handled by validateWorkCenterAvailability
-      }
-
-      const shifts = workCenter.data.shifts || [];
-      const maintenanceWindows = workCenter.data.maintenanceWindows || [];
-      
-      // If shifts also exist, skip maintenance window validation (already handled by shift validation)
-      if (shifts.length > 0) {
-        continue;
-      }
-      
-      if (maintenanceWindows.length === 0) {
-        continue; // No maintenance windows defined, no validation needed
-      }
-
-      const startDate = parseDate(workOrder.data.startDate);
-      const endDate = parseDate(workOrder.data.endDate);
-      const durationMinutes = workOrder.data.durationMinutes;
-
-      if (!startDate || !endDate) {
-        errors.push(
-          `Work order ${workOrder.docId} has invalid dates for maintenance window validation`
-        );
-        continue;
-      }
-
-      // Calculate what the end date should be accounting for maintenance windows only
-      const expectedEndDate = this.calculateEndDateWithMaintenanceWindows(
-        startDate,
-        durationMinutes,
-        maintenanceWindows
-      );
-
-      // Verify the end date matches expected end date (within 1 minute tolerance for rounding)
-      const timeDifference = Math.abs(endDate.diff(expectedEndDate, 'minutes').minutes);
-      if (timeDifference > 1) {
-        const expectedEndISO = expectedEndDate.toISO();
-        errors.push(
-          `Work order ${workOrder.docId} end date ${workOrder.data.endDate} does not match expected end date accounting for maintenance windows${expectedEndISO ? ` (expected: ${expectedEndISO})` : ''}`
-        );
-      }
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors
-    };
-  }
-
-  validateWorkOrdersRespectShifts(
-    workOrders: WorkOrderDocument[],
-    workCenters: WorkCenterDocument[]
-  ): ValidationResult {
-    const errors: string[] = [];
-
-    const workCentersMap = new Map(
-      workCenters.map(wc => [wc.docId, wc])
-    );
-
-    for (const workOrder of workOrders) {
-      // Skip maintenance work orders - they are fixed and not validated against shifts/maintenance windows
-      if (workOrder.data.isMaintenance) {
-        continue;
-      }
-
-      const workCenter = workCentersMap.get(workOrder.data.workCenterId);
-      if (!workCenter) {
-        continue; // Already handled by validateWorkCenterAvailability
-      }
-
-      const shifts = workCenter.data.shifts || [];
-      const maintenanceWindows = workCenter.data.maintenanceWindows || [];
-      
-      if (shifts.length === 0 && maintenanceWindows.length === 0) {
-        continue; // No shifts or maintenance windows defined, no validation needed
-      }
-
-      const startDate = parseDate(workOrder.data.startDate);
-      const endDate = parseDate(workOrder.data.endDate);
-      const durationMinutes = workOrder.data.durationMinutes;
-
-      if (!startDate || !endDate) {
-        errors.push(
-          `Work order ${workOrder.docId} has invalid dates for shift validation`
-        );
-        continue;
-      }
-
-      // If both shifts and maintenance windows exist, use combined calculation
-      // Otherwise use the appropriate single calculation
-      let expectedEndDate: DateTime | null;
-      if (shifts.length > 0 && maintenanceWindows.length > 0) {
-        expectedEndDate = this.calculateEndDateWithShiftsAndMaintenanceWindows(
-          startDate,
-          durationMinutes,
-          shifts,
-          maintenanceWindows
-        );
-      } else if (shifts.length > 0) {
-        expectedEndDate = this.calculateEndDateWithShifts(startDate, durationMinutes, shifts);
-      } else {
-        // Only maintenance windows
-        expectedEndDate = this.calculateEndDateWithMaintenanceWindows(startDate, durationMinutes, maintenanceWindows);
-      }
-
-      if (!expectedEndDate) {
-        errors.push(
-          `Work order ${workOrder.docId} could not be scheduled within available shifts/maintenance windows (duration: ${durationMinutes} minutes)`
-        );
-        continue;
-      }
-
-      // Verify the end date matches expected end date (within 1 minute tolerance for rounding)
-      const timeDifference = Math.abs(endDate.diff(expectedEndDate, 'minutes').minutes);
-      if (timeDifference > 1) {
-        const expectedEndISO = expectedEndDate.toISO();
-        errors.push(
-          `Work order ${workOrder.docId} end date ${workOrder.data.endDate} does not match expected end date accounting for shifts${expectedEndISO ? ` (expected: ${expectedEndISO})` : ''}`
-        );
-      }
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors
-    };
-  }
-
-  validateAllConstraints(
-    workOrders: WorkOrderDocument[],
-    workCenters: WorkCenterDocument[],
-    manufacturingOrders: ManufacturingOrderDocument[]
-  ): ValidationResult {
-    const allErrors: string[] = [];
-
-    const result1 = this.validateAllWorkOrdersHaveValidDates(workOrders);
-    allErrors.push(...result1.errors);
-
-    const result2 = this.validateAllWorkOrdersCompleteBeforeDueDate(
-      workOrders,
-      manufacturingOrders
-    );
-    allErrors.push(...result2.errors);
-
-    const result3 = this.validateNoWorkOrderOverlaps(workOrders);
-    allErrors.push(...result3.errors);
-
-    const result4 = this.validateWorkCenterAvailability(workOrders, workCenters);
-    allErrors.push(...result4.errors);
-
-    const result5 = this.validateDependenciesRespected(workOrders);
-    allErrors.push(...result5.errors);
-
-    const result6 = this.validateWorkOrdersRespectShifts(workOrders, workCenters);
-    allErrors.push(...result6.errors);
-
-    const result7 = this.validateWorkOrdersRespectMaintenanceWindows(workOrders, workCenters);
-    allErrors.push(...result7.errors);
-
-    return {
-      valid: allErrors.length === 0,
-      errors: allErrors
-    };
   }
 }
