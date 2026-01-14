@@ -39,7 +39,7 @@
               "manufacturingOrderNumber": "MO-001-001",
               "itemId": "item-001-001",
               "quantity": 50,
-              "dueDate": "2024-01-20T00:00:00Z"
+              "dueDate": "2024-01-10T12:00:00Z"
             }
           }
         ]
@@ -82,7 +82,7 @@
               "manufacturingOrderNumber": "MO-002-001",
               "itemId": "item-002-001",
               "quantity": 55,
-              "dueDate": "2024-01-28T00:00:00Z"
+              "dueDate": "2024-01-17T13:00:00Z"
             }
           }
         ]
@@ -125,7 +125,7 @@
               "manufacturingOrderNumber": "MO-003-001",
               "itemId": "item-003-001",
               "quantity": 60,
-              "dueDate": "2024-02-05T00:00:00Z"
+              "dueDate": "2024-01-24T14:00:00Z"
             }
           }
         ]
@@ -168,7 +168,7 @@
               "manufacturingOrderNumber": "MO-004-001",
               "itemId": "item-004-001",
               "quantity": 65,
-              "dueDate": "2024-02-13T00:00:00Z"
+              "dueDate": "2024-01-31T10:00:00Z"
             }
           }
         ]
@@ -211,7 +211,7 @@
               "manufacturingOrderNumber": "MO-005-001",
               "itemId": "item-005-001",
               "quantity": 70,
-              "dueDate": "2024-02-21T00:00:00Z"
+              "dueDate": "2024-02-07T11:00:00Z"
             }
           }
         ]
@@ -254,7 +254,7 @@
               "manufacturingOrderNumber": "MO-006-001",
               "itemId": "item-006-001",
               "quantity": 75,
-              "dueDate": "2024-02-24T00:00:00Z"
+              "dueDate": "2024-02-14T15:00:00Z"
             }
           }
         ]
@@ -297,7 +297,7 @@
               "manufacturingOrderNumber": "MO-007-001",
               "itemId": "item-007-001",
               "quantity": 80,
-              "dueDate": "2024-03-03T00:00:00Z"
+              "dueDate": "2024-02-21T12:00:00Z"
             }
           }
         ]
@@ -340,7 +340,7 @@
               "manufacturingOrderNumber": "MO-008-001",
               "itemId": "item-008-001",
               "quantity": 85,
-              "dueDate": "2024-03-11T00:00:00Z"
+              "dueDate": "2024-02-28T13:00:00Z"
             }
           }
         ]
@@ -383,7 +383,7 @@
               "manufacturingOrderNumber": "MO-009-001",
               "itemId": "item-009-001",
               "quantity": 90,
-              "dueDate": "2024-03-19T00:00:00Z"
+              "dueDate": "2024-03-06T14:00:00Z"
             }
           }
         ]
@@ -426,7 +426,7 @@
               "manufacturingOrderNumber": "MO-010-001",
               "itemId": "item-010-001",
               "quantity": 95,
-              "dueDate": "2024-03-27T00:00:00Z"
+              "dueDate": "2024-03-13T10:00:00Z"
             }
           }
         ]
@@ -469,7 +469,7 @@
               "manufacturingOrderNumber": "MO-011-001",
               "itemId": "item-011-001",
               "quantity": 100,
-              "dueDate": "2024-03-30T00:00:00Z"
+              "dueDate": "2024-03-20T11:00:00Z"
             }
           }
         ]
@@ -512,7 +512,7 @@
               "manufacturingOrderNumber": "MO-012-001",
               "itemId": "item-012-001",
               "quantity": 105,
-              "dueDate": "2024-04-07T00:00:00Z"
+              "dueDate": "2024-03-27T15:00:00Z"
             }
           }
         ]
@@ -555,7 +555,7 @@
               "manufacturingOrderNumber": "MO-013-001",
               "itemId": "item-013-001",
               "quantity": 110,
-              "dueDate": "2024-04-15T00:00:00Z"
+              "dueDate": "2024-04-03T12:00:00Z"
             }
           }
         ]
@@ -598,7 +598,7 @@
               "manufacturingOrderNumber": "MO-014-001",
               "itemId": "item-014-001",
               "quantity": 115,
-              "dueDate": "2024-04-23T00:00:00Z"
+              "dueDate": "2024-04-10T13:00:00Z"
             }
           }
         ]
@@ -641,7 +641,7 @@
               "manufacturingOrderNumber": "MO-015-001",
               "itemId": "item-015-001",
               "quantity": 120,
-              "dueDate": "2024-05-01T00:00:00Z"
+              "dueDate": "2024-04-17T14:00:00Z"
             }
           }
         ]
